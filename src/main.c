@@ -12,7 +12,7 @@
 union lyra_insn_operand {
     int32_t i32;
     double f64;
-    uint64_t var;
+    size_t var;
 };
 
 #define LYRA_INSN_I32(X) ((union lyra_insn_operand){.i32 = (X)})
@@ -22,30 +22,30 @@ union lyra_insn_operand {
 struct lyra_insn {
     struct lyra_insn *prev;
     struct lyra_insn *next;
-    uint64_t left_reg;
+    size_t dest_var;
+    size_t left_var;
     union lyra_insn_operand right_operand;
-    uint64_t dest_reg;
     enum lyra_insn_type type;
 };
 
 struct lyra_insn *lyra_insn_new(enum lyra_insn_type type,
-                                uint64_t left_operand,
+                                size_t left_var,
                                 union lyra_insn_operand right_operand,
-                                uint64_t dest_reg) {
+                                size_t dest_var) {
     struct lyra_insn *insn = malloc(sizeof(struct lyra_insn));
     insn->prev = 0;
     insn->next = 0;
-    insn->left_reg = left_operand;
+    insn->left_var = left_var;
     insn->right_operand = right_operand;
-    insn->dest_reg = dest_reg;
+    insn->dest_var = dest_var;
     insn->type = type;
     return insn;
 }
 
 struct lyra_insn *lyra_insn_new1(enum lyra_insn_type type,
-                                 uint64_t left_operand,
-                                 uint64_t dest_reg) {
-    return lyra_insn_new(type, left_operand, LYRA_INSN_REG(0), dest_reg);
+                                 size_t left_var,
+                                 size_t dest_var) {
+    return lyra_insn_new(type, left_var, LYRA_INSN_REG(0), dest_var);
 }
 
 void lyra_insn_print(struct lyra_insn *insn) {
@@ -53,9 +53,9 @@ void lyra_insn_print(struct lyra_insn *insn) {
            insn->next);
     printf("  type: %d\n", insn->type);
     if(lyra_insn_type_has_left_var(insn->type))
-        printf("  left: 0x%" PRIx64 "\n", insn->left_reg);
-    printf("  right: 0x%" PRIx64 "\n", insn->right_operand.var);
-    printf("  dest: 0x%" PRIx64 "\n", insn->dest_reg);
+        printf("  left: 0x%" PRIxMAX "\n", insn->left_var);
+    printf("  right: 0x%" PRIxMAX "\n", insn->right_operand.var);
+    printf("  dest: 0x%" PRIxMAX "\n", insn->dest_var);
 }
 
 LYRA_ARRAY_COPY(size_t, lyra_vars_array, 1)
@@ -198,17 +198,17 @@ int lyra_pass_fill_inputs(struct lyra_block *block,
         // mov instructions
         case LYRA_OP_MOV_I32:
         case LYRA_OP_MOV_F64: {
-            LYRA_BA_SET_BIT(owned_vars, insn->left_reg);
+            LYRA_BA_SET_BIT(owned_vars, insn->left_var);
             // fallthrough
         }
         case LYRA_OP_MOV_VAR: {
-            LYRA_BA_SET_BIT(owned_vars, insn->dest_reg);
+            LYRA_BA_SET_BIT(owned_vars, insn->dest_var);
             break;
         }
         // everything else
         default: {
             if (lyra_insn_type_has_left_var(insn->type))
-                LYRA_BA_SET_BIT(used_vars, insn->left_reg);
+                LYRA_BA_SET_BIT(used_vars, insn->left_var);
             if (lyra_insn_type_has_right_var(insn->type))
                 LYRA_BA_SET_BIT(used_vars, insn->right_operand.var);
             break;
@@ -237,24 +237,24 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
          insn = insn->next) {
         int has_dest_reg = lyra_insn_type_has_dest(insn->type);
         if (lyra_insn_type_has_left_var(insn->type))
-            insn->left_reg = variable_mapping[insn->left_reg];
+            insn->left_var = variable_mapping[insn->left_var];
         if (lyra_insn_type_has_right_var(insn->type))
             insn->right_operand.var =
                 variable_mapping[insn->right_operand.var];
         if (has_dest_reg) {
             if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                                insn->dest_reg))
-                LYRA_BA_SET_BIT(shared->managed_vars_set, insn->dest_reg);
+                                insn->dest_var))
+                LYRA_BA_SET_BIT(shared->managed_vars_set, insn->dest_var);
             if (LYRA_BA_GET_BIT(shared->managed_vars_set,
-                                insn->dest_reg)) {
+                                insn->dest_var)) {
                 enum lyra_value_type type =
-                    shared->variable_types[insn->dest_reg];
+                    shared->variable_types[insn->dest_var];
                 const size_t new_reg =
                     lyra_function_shared_add_variable(shared, type);
-                variable_mapping[insn->dest_reg] = new_reg;
-                insn->dest_reg = new_reg;
+                variable_mapping[insn->dest_var] = new_reg;
+                insn->dest_var = new_reg;
             } else {
-                LYRA_BA_SET_BIT(shared->managed_vars_set, insn->dest_reg);
+                LYRA_BA_SET_BIT(shared->managed_vars_set, insn->dest_var);
             }
         }
     }
@@ -276,25 +276,25 @@ int lyra_pass_const_prop(struct lyra_block *block,
         // mov immediate instructions
         case LYRA_OP_MOV_I32: {
             if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                                insn->dest_reg))
+                                insn->dest_var))
                 continue;
-            constants[insn->dest_reg] = (struct lyra_value){
-                .data.i32 = (int32_t)insn->left_reg,
+            constants[insn->dest_var] = (struct lyra_value){
+                .data.i32 = (int32_t)insn->left_var,
                 .type = LYRA_VALUE_I32,
             };
             break;
         }
         // Arithmetic
         case LYRA_OP_ADD_I32: {
-            assert(constants[insn->left_reg].type == LYRA_VALUE_I32);
+            assert(constants[insn->left_var].type == LYRA_VALUE_I32);
             struct lyra_value result = (struct lyra_value){
-                .data.i32 = constants[insn->left_reg].data.i32 +
+                .data.i32 = constants[insn->left_var].data.i32 +
                             (int32_t)insn->right_operand.i32,
                 .type = LYRA_VALUE_I32,
             };
-            constants[insn->dest_reg] = result;
+            constants[insn->dest_var] = result;
             insn->type = LYRA_OP_MOV_I32;
-            insn->left_reg = 0;
+            insn->left_var = 0;
             insn->right_operand = LYRA_INSN_I32(result.data.i32);
             continue;
         }
@@ -314,7 +314,7 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
         if (lyra_insn_type_has_left_var(insn->type))
-            LYRA_BA_SET_BIT(used_vars, insn->left_reg);
+            LYRA_BA_SET_BIT(used_vars, insn->left_var);
         if (lyra_insn_type_has_right_var(insn->type))
             LYRA_BA_SET_BIT(used_vars, insn->right_operand.var);
     }
@@ -325,7 +325,7 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
         int has_dest_reg = lyra_insn_type_has_dest(insn->type);
-        if (has_dest_reg && !LYRA_BA_GET_BIT(used_vars, insn->dest_reg)) {
+        if (has_dest_reg && !LYRA_BA_GET_BIT(used_vars, insn->dest_var)) {
             printf("remove %p\n", insn);
             lyra_block_remove_insn(block, insn);
         }
