@@ -2,24 +2,141 @@ enum lyra_insn_type {
 LYRA_OP_MOV_VAR,
 LYRA_OP_MOV_I32,
 LYRA_OP_MOV_F64,
+LYRA_OP_MUL_VAR,
+LYRA_OP_MUL_I32,
+LYRA_OP_MUL_F64,
+LYRA_OP_DIV_VAR,
+LYRA_OP_DIV_I32,
+LYRA_OP_DIV_F64,
 LYRA_OP_ADD_VAR,
 LYRA_OP_ADD_I32,
 LYRA_OP_ADD_F64,
+LYRA_OP_SUB_VAR,
+LYRA_OP_SUB_I32,
+LYRA_OP_SUB_F64,
+LYRA_OP_MOD_VAR,
+LYRA_OP_MOD_I32,
+LYRA_OP_MOD_F64,
+LYRA_OP_EQ_VAR,
+LYRA_OP_EQ_I32,
+LYRA_OP_EQ_F64,
+LYRA_OP_NEQ_VAR,
+LYRA_OP_NEQ_I32,
+LYRA_OP_NEQ_F64,
+LYRA_OP_LT_VAR,
+LYRA_OP_LT_I32,
+LYRA_OP_LT_F64,
+LYRA_OP_GT_VAR,
+LYRA_OP_GT_I32,
+LYRA_OP_GT_F64,
+LYRA_OP_LEQ_VAR,
+LYRA_OP_LEQ_I32,
+LYRA_OP_LEQ_F64,
+LYRA_OP_GEQ_VAR,
+LYRA_OP_GEQ_I32,
+LYRA_OP_GEQ_F64,
+LYRA_OP_BOR_I32,
+LYRA_OP_BXOR_I32,
+LYRA_OP_BAND_I32,
+LYRA_OP_BSHL_I32,
+LYRA_OP_BSHR_I32,
 };
 int lyra_insn_type_has_left_var(enum lyra_insn_type type) {
 if(type == LYRA_OP_MOV_VAR) return 1;
+if(type == LYRA_OP_MOV_I32) return 1;
+if(type == LYRA_OP_MOV_F64) return 1;
+if(type == LYRA_OP_MUL_VAR) return 1;
+if(type == LYRA_OP_MUL_I32) return 1;
+if(type == LYRA_OP_MUL_F64) return 1;
+if(type == LYRA_OP_DIV_VAR) return 1;
+if(type == LYRA_OP_DIV_I32) return 1;
+if(type == LYRA_OP_DIV_F64) return 1;
 if(type == LYRA_OP_ADD_VAR) return 1;
 if(type == LYRA_OP_ADD_I32) return 1;
 if(type == LYRA_OP_ADD_F64) return 1;
+if(type == LYRA_OP_SUB_VAR) return 1;
+if(type == LYRA_OP_SUB_I32) return 1;
+if(type == LYRA_OP_SUB_F64) return 1;
+if(type == LYRA_OP_MOD_VAR) return 1;
+if(type == LYRA_OP_MOD_I32) return 1;
+if(type == LYRA_OP_MOD_F64) return 1;
+if(type == LYRA_OP_EQ_VAR) return 1;
+if(type == LYRA_OP_EQ_I32) return 1;
+if(type == LYRA_OP_EQ_F64) return 1;
+if(type == LYRA_OP_NEQ_VAR) return 1;
+if(type == LYRA_OP_NEQ_I32) return 1;
+if(type == LYRA_OP_NEQ_F64) return 1;
+if(type == LYRA_OP_LT_VAR) return 1;
+if(type == LYRA_OP_LT_I32) return 1;
+if(type == LYRA_OP_LT_F64) return 1;
+if(type == LYRA_OP_GT_VAR) return 1;
+if(type == LYRA_OP_GT_I32) return 1;
+if(type == LYRA_OP_GT_F64) return 1;
+if(type == LYRA_OP_LEQ_VAR) return 1;
+if(type == LYRA_OP_LEQ_I32) return 1;
+if(type == LYRA_OP_LEQ_F64) return 1;
+if(type == LYRA_OP_GEQ_VAR) return 1;
+if(type == LYRA_OP_GEQ_I32) return 1;
+if(type == LYRA_OP_GEQ_F64) return 1;
+if(type == LYRA_OP_BOR_I32) return 1;
+if(type == LYRA_OP_BXOR_I32) return 1;
+if(type == LYRA_OP_BAND_I32) return 1;
+if(type == LYRA_OP_BSHL_I32) return 1;
+if(type == LYRA_OP_BSHR_I32) return 1;
 return 0;}
 int lyra_insn_type_has_right_var(enum lyra_insn_type type) {
+if(type == LYRA_OP_MUL_VAR) return 1;
+if(type == LYRA_OP_DIV_VAR) return 1;
 if(type == LYRA_OP_ADD_VAR) return 1;
+if(type == LYRA_OP_SUB_VAR) return 1;
+if(type == LYRA_OP_MOD_VAR) return 1;
+if(type == LYRA_OP_EQ_VAR) return 1;
+if(type == LYRA_OP_NEQ_VAR) return 1;
+if(type == LYRA_OP_LT_VAR) return 1;
+if(type == LYRA_OP_GT_VAR) return 1;
+if(type == LYRA_OP_LEQ_VAR) return 1;
+if(type == LYRA_OP_GEQ_VAR) return 1;
 return 0;}
 int lyra_insn_type_has_dest(enum lyra_insn_type type) {
 if(type == LYRA_OP_MOV_VAR) return 1;
 if(type == LYRA_OP_MOV_I32) return 1;
 if(type == LYRA_OP_MOV_F64) return 1;
+if(type == LYRA_OP_MUL_VAR) return 1;
+if(type == LYRA_OP_MUL_I32) return 1;
+if(type == LYRA_OP_MUL_F64) return 1;
+if(type == LYRA_OP_DIV_VAR) return 1;
+if(type == LYRA_OP_DIV_I32) return 1;
+if(type == LYRA_OP_DIV_F64) return 1;
 if(type == LYRA_OP_ADD_VAR) return 1;
 if(type == LYRA_OP_ADD_I32) return 1;
 if(type == LYRA_OP_ADD_F64) return 1;
+if(type == LYRA_OP_SUB_VAR) return 1;
+if(type == LYRA_OP_SUB_I32) return 1;
+if(type == LYRA_OP_SUB_F64) return 1;
+if(type == LYRA_OP_MOD_VAR) return 1;
+if(type == LYRA_OP_MOD_I32) return 1;
+if(type == LYRA_OP_MOD_F64) return 1;
+if(type == LYRA_OP_EQ_VAR) return 1;
+if(type == LYRA_OP_EQ_I32) return 1;
+if(type == LYRA_OP_EQ_F64) return 1;
+if(type == LYRA_OP_NEQ_VAR) return 1;
+if(type == LYRA_OP_NEQ_I32) return 1;
+if(type == LYRA_OP_NEQ_F64) return 1;
+if(type == LYRA_OP_LT_VAR) return 1;
+if(type == LYRA_OP_LT_I32) return 1;
+if(type == LYRA_OP_LT_F64) return 1;
+if(type == LYRA_OP_GT_VAR) return 1;
+if(type == LYRA_OP_GT_I32) return 1;
+if(type == LYRA_OP_GT_F64) return 1;
+if(type == LYRA_OP_LEQ_VAR) return 1;
+if(type == LYRA_OP_LEQ_I32) return 1;
+if(type == LYRA_OP_LEQ_F64) return 1;
+if(type == LYRA_OP_GEQ_VAR) return 1;
+if(type == LYRA_OP_GEQ_I32) return 1;
+if(type == LYRA_OP_GEQ_F64) return 1;
+if(type == LYRA_OP_BOR_I32) return 1;
+if(type == LYRA_OP_BXOR_I32) return 1;
+if(type == LYRA_OP_BAND_I32) return 1;
+if(type == LYRA_OP_BSHL_I32) return 1;
+if(type == LYRA_OP_BSHR_I32) return 1;
 return 0;}
