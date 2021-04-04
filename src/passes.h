@@ -14,3 +14,6 @@ int lyra_pass_const_prop(struct lyra_block *block,
 
 int lyra_pass_purge_dead_code(struct lyra_block *block,
                               struct lyra_function_shared *shared);
+
+int lyra_pass_type_inference(struct lyra_block *block,
+                             struct lyra_function_shared *shared);

@@ -33,9 +33,9 @@ void lyra_block_remove_insn(struct lyra_block *block,
     if (block->insn_last == insn) {
         block->insn_last = block->insn_last->prev;
     }
-    if(insn->prev != 0)
+    if (insn->prev != 0)
         insn->prev->next = insn->next;
-    if(insn->next != 0)
+    if (insn->next != 0)
         insn->next->prev = insn->prev;
     insn->prev = 0;
     insn->next = 0;

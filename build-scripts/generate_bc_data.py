@@ -71,6 +71,8 @@ class Instruction:
             self.options["c_codegen"](compiler)
             return compiler.end()
 
+# Move operations
+
 def gen_mov_var(compiler):
     compiler.assign_dest_var()
     compiler.left_var()
@@ -85,6 +87,8 @@ def gen_mov_f64(compiler):
     compiler.assign_dest_var()
     compiler.right_f64()
 Instruction("MOV_F64", ARG_TYPE_NONE, ARG_TYPE_F64, c_codegen=gen_mov_f64)
+
+# Binary operations
 
 for (op, c_bin_func, c_bin_op) in [
     ("MUL", "au_value_mul", "*"),
@@ -111,6 +115,14 @@ for (op, c_bin_op) in [
     ("BSHR", ">>"),
 ]:
     Instruction(op + "_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_i32=c_bin_op)
+
+# Call instructions
+
+def gen_ret_var(compiler):
+    compiler.raw("return ")
+    compiler.left_var()
+Instruction("RET", ARG_TYPE_VAR, c_codegen=gen_ret_var, has_side_effect=True)
+
 
 # Types data
 
@@ -139,6 +151,13 @@ with open("./src/bc_data/types.txt", "w") as insn_type_f:
     insn_type_defs = "static inline int lyra_insn_type_has_dest(enum lyra_insn_type type) {\n"
     for insn in Instruction.instances:
         if insn.has_dest:
+            insn_type_defs += f"if(type == LYRA_OP_{insn.name}) return 1;\n"
+    insn_type_defs += "return 0;}\n"
+    insn_type_f.write(insn_type_defs)
+
+    insn_type_defs = "static inline int lyra_insn_type_has_side_effect(enum lyra_insn_type type) {\n"
+    for insn in Instruction.instances:
+        if "has_side_effect" in insn.options:
             insn_type_defs += f"if(type == LYRA_OP_{insn.name}) return 1;\n"
     insn_type_defs += "return 0;}\n"
     insn_type_f.write(insn_type_defs)

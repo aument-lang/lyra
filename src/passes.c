@@ -138,8 +138,7 @@ int lyra_pass_const_prop(struct lyra_block *block,
 
 int lyra_pass_purge_dead_code(struct lyra_block *block,
                               struct lyra_function_shared *shared) {
-    lyra_bit_array used_vars =
-        malloc(LYRA_BA_LEN(shared->variables_len));
+    lyra_bit_array used_vars = malloc(LYRA_BA_LEN(shared->variables_len));
     int changed = 1;
     while (changed) {
         changed = 0;
@@ -158,7 +157,9 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
         struct lyra_insn *insn = block->insn_first;
         while (insn != 0) {
             int has_dest_reg = lyra_insn_type_has_dest(insn->type);
-            if (has_dest_reg && !LYRA_BA_GET_BIT(used_vars, insn->dest_var)) {
+            if (!lyra_insn_type_has_side_effect(insn->type) &&
+                has_dest_reg &&
+                !LYRA_BA_GET_BIT(used_vars, insn->dest_var)) {
                 changed = 1;
                 struct lyra_insn *insn_next = insn->next;
                 lyra_block_remove_insn(block, insn);
@@ -169,5 +170,31 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
         }
     }
     free(used_vars);
+    return 1;
+}
+
+int lyra_pass_type_inference(struct lyra_block *block,
+                             struct lyra_function_shared *shared) {
+    for (struct lyra_insn *insn = block->insn_first; insn != 0;
+         insn = insn->next) {
+        switch (insn->type) {
+        case LYRA_OP_MOV_I32: {
+            shared->variable_types[insn->dest_var] = LYRA_VALUE_I32;
+            break;
+        }
+        case LYRA_OP_MOV_F64: {
+            shared->variable_types[insn->dest_var] = LYRA_VALUE_F64;
+            break;
+        }
+        case LYRA_OP_MOV_VAR: {
+            // TODO
+            // shared->variable_types[insn->dest_var] =
+            // shared->variable_types[insn->right_operand.var];
+            break;
+        }
+        default:
+            break;
+        }
+    }
     return 1;
 }

@@ -17,9 +17,12 @@ struct lyra_value {
 };
 
 static inline const char *lyra_value_type_c(enum lyra_value_type type) {
-    switch(type) {
-    case LYRA_VALUE_ANY: return "au_value_t";
-    case LYRA_VALUE_I32: return "int32_t";
-    case LYRA_VALUE_F64: return "double";
+    switch (type) {
+    case LYRA_VALUE_ANY:
+        return "au_value_t";
+    case LYRA_VALUE_I32:
+        return "int32_t";
+    case LYRA_VALUE_F64:
+        return "double";
     }
 }

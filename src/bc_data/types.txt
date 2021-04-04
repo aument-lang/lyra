@@ -41,6 +41,7 @@ LYRA_OP_BXOR_I32_IMM,
 LYRA_OP_BAND_I32_IMM,
 LYRA_OP_BSHL_I32_IMM,
 LYRA_OP_BSHR_I32_IMM,
+LYRA_OP_RET,
 };
 static inline int lyra_insn_type_has_left_var(enum lyra_insn_type type) {
 if(type == LYRA_OP_MOV_VAR) return 1;
@@ -82,6 +83,7 @@ if(type == LYRA_OP_BXOR_I32_IMM) return 1;
 if(type == LYRA_OP_BAND_I32_IMM) return 1;
 if(type == LYRA_OP_BSHL_I32_IMM) return 1;
 if(type == LYRA_OP_BSHR_I32_IMM) return 1;
+if(type == LYRA_OP_RET) return 1;
 return 0;}
 static inline int lyra_insn_type_has_right_var(enum lyra_insn_type type) {
 if(type == LYRA_OP_MUL_VAR) return 1;
@@ -138,4 +140,8 @@ if(type == LYRA_OP_BXOR_I32_IMM) return 1;
 if(type == LYRA_OP_BAND_I32_IMM) return 1;
 if(type == LYRA_OP_BSHL_I32_IMM) return 1;
 if(type == LYRA_OP_BSHR_I32_IMM) return 1;
+if(type == LYRA_OP_RET) return 1;
+return 0;}
+static inline int lyra_insn_type_has_side_effect(enum lyra_insn_type type) {
+if(type == LYRA_OP_RET) return 1;
 return 0;}
