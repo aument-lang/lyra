@@ -1,6 +1,10 @@
-#include "function.h"
+#include <string.h>
+
+#include "banned.h"
+
 #include "block.h"
 #include "comp.h"
+#include "function.h"
 
 void lyra_block_connector_comp(const struct lyra_block_connector *conn,
                                const struct lyra_function_shared *shared,
@@ -8,8 +12,9 @@ void lyra_block_connector_comp(const struct lyra_block_connector *conn,
     switch (conn->type) {
     case LYRA_BLOCK_RET: {
         lyra_comp_print_str(c, "return ");
-        const char *convert_fn = lyra_value_type_to_any_fn(shared->variable_types[conn->var]);
-        if(convert_fn != 0) {
+        const char *convert_fn =
+            lyra_value_type_to_any_fn(shared->variable_types[conn->var]);
+        if (convert_fn != 0) {
             lyra_comp_print_str(c, convert_fn);
             lyra_comp_print_str(c, "(v");
             lyra_comp_print_isize(c, conn->var);
@@ -46,7 +51,7 @@ void lyra_block_connector_comp(const struct lyra_block_connector *conn,
 }
 
 void lyra_block_init(struct lyra_block *block) {
-    *block = (struct lyra_block){0};
+    memset(block, 0, sizeof(struct lyra_block));
 }
 
 void lyra_block_print(struct lyra_block *block) {

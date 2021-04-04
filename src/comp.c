@@ -1,13 +1,16 @@
 #include "comp.h"
 #include <inttypes.h>
 
-void lyra_comp_init(struct lyra_comp *c) {
+#include "banned.h"
+
+void lyra_comp_init(struct lyra_comp *c, struct lyra_ctx *ctx) {
     c->source = (struct lyra_char_array){0};
+    c->ctx = ctx;
 }
 
 void lyra_comp_print_str(struct lyra_comp *c, const char *str) {
     while (*str != 0) {
-        lyra_char_array_add(&c->source, *str);
+        lyra_char_array_add(&c->source, *str, c->ctx);
         str++;
     }
 }

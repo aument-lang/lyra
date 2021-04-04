@@ -1,44 +1,51 @@
+#include "banned.h"
+
 #include "function.h"
 #include "comp.h"
+#include "context.h"
 #include "insn.h"
 
 size_t
 lyra_function_shared_add_variable(struct lyra_function_shared *shared,
-                                  enum lyra_value_type type) {
+                                  enum lyra_value_type type,
+                                  struct lyra_ctx *ctx) {
     size_t idx = shared->variables_len;
-    shared->variable_types =
-        realloc(shared->variable_types, sizeof(enum lyra_value_type) *
-                                            (shared->variables_len + 1));
+    shared->variable_types = lyra_ctx_mem_realloc(
+        ctx, shared->variable_types,
+        sizeof(enum lyra_value_type) * (shared->variables_len + 1));
     shared->variable_types[idx] = type;
     shared->variables_len++;
     return idx;
 }
 
-struct lyra_function *lyra_function_new(char *name) {
-    struct lyra_function *fn = malloc(sizeof(struct lyra_function));
+struct lyra_function *lyra_function_new(char *name,
+                                        struct lyra_ctx *ctx) {
+    struct lyra_function *fn =
+        lyra_ctx_mem_malloc(ctx, sizeof(struct lyra_function));
     fn->blocks = (struct lyra_block_array){0};
     fn->shared = (struct lyra_function_shared){0};
     fn->name = name;
+    fn->ctx = ctx;
     return fn;
 }
 
 size_t lyra_function_add_block(struct lyra_function *fn,
                                struct lyra_block block) {
     size_t idx = fn->blocks.len;
-    lyra_block_array_add(&fn->blocks, block);
+    lyra_block_array_add(&fn->blocks, block, fn->ctx);
     return idx;
 }
 
 size_t lyra_function_add_variable(struct lyra_function *fn,
                                   enum lyra_value_type type) {
-    return lyra_function_shared_add_variable(&fn->shared, type);
+    return lyra_function_shared_add_variable(&fn->shared, type, fn->ctx);
 }
 
 void lyra_function_finalize(struct lyra_function *fn) {
-    fn->shared.managed_vars_set =
-        calloc(LYRA_BA_LEN(fn->shared.variables_len), 1);
-    fn->shared.managed_vars_multiple_use =
-        calloc(LYRA_BA_LEN(fn->shared.variables_len), 1);
+    fn->shared.managed_vars_set = lyra_ctx_mem_calloc(
+        fn->ctx, LYRA_BA_LEN(fn->shared.variables_len), 1);
+    fn->shared.managed_vars_multiple_use = lyra_ctx_mem_calloc(
+        fn->ctx, LYRA_BA_LEN(fn->shared.variables_len), 1);
     fn->shared.managed_vars_len = fn->shared.variables_len;
 }
 
@@ -48,11 +55,10 @@ void lyra_function_comp(struct lyra_function *fn, struct lyra_comp *c) {
     lyra_comp_print_str(c, "(au_value_t *args) {\n");
     for (size_t i = 0; i < fn->shared.variables_len; i++) {
         const enum lyra_value_type type = fn->shared.variable_types[i];
-        if(type == LYRA_VALUE_UNTYPED)
+        if (type == LYRA_VALUE_UNTYPED)
             continue;
         lyra_comp_print_str(c, "  ");
-        lyra_comp_print_str(
-            c, lyra_value_type_c(type));
+        lyra_comp_print_str(c, lyra_value_type_c(type));
         lyra_comp_print_str(c, " v");
         lyra_comp_print_i32(c, i);
         lyra_comp_print_str(c, ";\n");
@@ -79,7 +85,7 @@ void lyra_function_comp(struct lyra_function *fn, struct lyra_comp *c) {
 int lyra_function_all_blocks(struct lyra_function *fn,
                              lyra_block_mutator_fn_t mutator) {
     for (size_t i = 0; i < fn->blocks.len; i++) {
-        if (!mutator(&fn->blocks.data[i], &fn->shared))
+        if (!mutator(&fn->blocks.data[i], &fn->shared, fn->ctx))
             return 0;
     }
     return 1;

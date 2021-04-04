@@ -1,17 +1,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "banned.h"
+
 #include "bc_data/types.txt"
 #include "bit_array.h"
 #include "block.h"
 #include "function.h"
 
 int lyra_pass_fill_inputs(struct lyra_block *block,
-                          struct lyra_function_shared *shared) {
+                          struct lyra_function_shared *shared,
+                          struct lyra_ctx *ctx) {
     lyra_bit_array owned_vars =
-        calloc(LYRA_BA_LEN(shared->managed_vars_len), 1);
+        lyra_ctx_mem_calloc(ctx, LYRA_BA_LEN(shared->managed_vars_len), 1);
     lyra_bit_array used_vars =
-        calloc(LYRA_BA_LEN(shared->managed_vars_len), 1);
+        lyra_ctx_mem_calloc(ctx, LYRA_BA_LEN(shared->managed_vars_len), 1);
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
         switch (insn->type) {
@@ -53,9 +56,10 @@ static inline size_t size_t_array_at(size_t *a, size_t n, size_t idx) {
 }
 
 int lyra_pass_into_semi_ssa(struct lyra_block *block,
-                            struct lyra_function_shared *shared) {
-    size_t *variable_mapping =
-        malloc(sizeof(size_t) * shared->managed_vars_len);
+                            struct lyra_function_shared *shared,
+                            struct lyra_ctx *ctx) {
+    size_t *variable_mapping = lyra_ctx_mem_malloc(
+        ctx, sizeof(size_t) * shared->managed_vars_len);
     for (size_t i = 0; i < shared->managed_vars_len; i++)
         variable_mapping[i] = i;
 
@@ -79,7 +83,7 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
                 enum lyra_value_type type =
                     shared->variable_types[insn->dest_var];
                 const size_t new_reg =
-                    lyra_function_shared_add_variable(shared, type);
+                    lyra_function_shared_add_variable(shared, type, ctx);
                 variable_mapping[insn->dest_var] = new_reg;
                 insn->dest_var = new_reg;
             } else {
@@ -97,9 +101,10 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
 }
 
 int lyra_pass_const_prop(struct lyra_block *block,
-                         struct lyra_function_shared *shared) {
-    struct lyra_value *constants =
-        malloc(sizeof(struct lyra_value) * shared->variables_len);
+                         struct lyra_function_shared *shared,
+                         struct lyra_ctx *ctx) {
+    struct lyra_value *constants = lyra_ctx_mem_malloc(
+        ctx, sizeof(struct lyra_value) * shared->variables_len);
     for (size_t i = 0; i < shared->variables_len; i++)
         constants[i] = (struct lyra_value){0};
 
@@ -174,9 +179,12 @@ int lyra_pass_const_prop(struct lyra_block *block,
 }
 
 int lyra_pass_purge_dead_code(struct lyra_block *block,
-                              struct lyra_function_shared *shared) {
-    lyra_bit_array used_vars = malloc(LYRA_BA_LEN(shared->variables_len));
-    lyra_bit_array dead_vars = calloc(LYRA_BA_LEN(shared->variables_len), 1);
+                              struct lyra_function_shared *shared,
+                              struct lyra_ctx *ctx) {
+    lyra_bit_array used_vars =
+        lyra_ctx_mem_malloc(ctx, LYRA_BA_LEN(shared->variables_len));
+    lyra_bit_array dead_vars =
+        lyra_ctx_mem_calloc(ctx, LYRA_BA_LEN(shared->variables_len), 1);
     int changed = 1;
     while (changed) {
         changed = 0;
@@ -211,7 +219,7 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
             }
         }
     }
-    for(size_t i = 0; i < shared->variables_len; i++)
+    for (size_t i = 0; i < shared->variables_len; i++)
         if (LYRA_BA_GET_BIT(dead_vars, i))
             shared->variable_types[i] = LYRA_VALUE_UNTYPED;
     free(used_vars);
@@ -220,7 +228,8 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
 }
 
 int lyra_pass_type_inference(struct lyra_block *block,
-                             struct lyra_function_shared *shared) {
+                             struct lyra_function_shared *shared,
+                             struct lyra_ctx *ctx) {
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
         switch (insn->type) {

@@ -6,7 +6,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "banned.h"
+
 #include "bc_data/types.txt"
+#include "context.h"
 
 union lyra_insn_operand {
     int32_t i32;
@@ -30,12 +33,13 @@ struct lyra_insn {
 
 struct lyra_insn *lyra_insn_new(enum lyra_insn_type type, size_t left_var,
                                 union lyra_insn_operand right_operand,
-                                size_t dest_var);
+                                size_t dest_var, struct lyra_ctx *ctx);
 
 static inline struct lyra_insn *
 lyra_insn_imm(enum lyra_insn_type type,
-              union lyra_insn_operand right_operand, size_t dest_var) {
-    return lyra_insn_new(type, 0, right_operand, dest_var);
+              union lyra_insn_operand right_operand, size_t dest_var,
+              struct lyra_ctx *ctx) {
+    return lyra_insn_new(type, 0, right_operand, dest_var, ctx);
 }
 
 struct lyra_comp;

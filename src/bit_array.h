@@ -5,6 +5,8 @@
 // See LICENSE.txt for license information
 #pragma once
 
+#include "banned.h"
+
 typedef char *lyra_bit_array;
 #define LYRA_BA_LEN(n) ((n + 7) / 8)
 #define LYRA_BA_GET_BIT(x, n) ((((x)[(n) / 8]) & (0x1 << ((n) % 8))) != 0)

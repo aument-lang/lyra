@@ -8,6 +8,9 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#include "banned.h"
+
+#include "context.h"
 #include "exception.h"
 #include "platform.h"
 
@@ -17,13 +20,15 @@
         size_t len;                                                       \
         size_t cap;                                                       \
     };                                                                    \
-    static LYRA_UNUSED void NAME##_add(struct NAME *array, INNER el) {    \
+    static LYRA_UNUSED void NAME##_add(struct NAME *array, INNER el,      \
+                                       struct lyra_ctx *ctx) {        \
         if (array->cap == 0) {                                            \
-            array->data = (INNER *)malloc(sizeof(INNER) * IN_CAP);        \
+            array->data = (INNER *)lyra_ctx_mem_malloc(                   \
+                ctx, sizeof(INNER) * IN_CAP);                             \
             array->cap = IN_CAP;                                          \
         } else if (array->len == array->cap) {                            \
-            array->data = (INNER *)realloc(                               \
-                array->data, array->cap * 2 * sizeof(INNER));             \
+            array->data = (INNER *)lyra_ctx_mem_realloc(                  \
+                ctx, array->data, array->cap * 2 * sizeof(INNER));        \
             array->cap *= 2;                                              \
         }                                                                 \
         array->data[array->len++] = el;                                   \

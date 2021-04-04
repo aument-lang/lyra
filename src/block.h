@@ -1,5 +1,7 @@
 #pragma once
 
+#include "banned.h"
+
 #include "array.h"
 #include "insn.h"
 

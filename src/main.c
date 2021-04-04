@@ -4,16 +4,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "banned.h"
+
 #include "array.h"
 #include "bit_array.h"
 #include "block.h"
 #include "comp.h"
+#include "context.h"
 #include "insn.h"
 #include "passes.h"
 #include "value.h"
 
 int main() {
-    struct lyra_function *fn = lyra_function_new("main");
+    struct lyra_ctx ctx;
+    lyra_ctx_init(&ctx);
+
+    struct lyra_function *fn = lyra_function_new("main", &ctx);
     lyra_function_add_variable(fn, LYRA_VALUE_UNTYPED);
     lyra_function_add_variable(fn, LYRA_VALUE_UNTYPED);
 
@@ -22,27 +28,27 @@ int main() {
 
     {
         struct lyra_insn *insn =
-            lyra_insn_imm(LYRA_OP_MOV_I32, LYRA_INSN_I32(0x66), 0);
+            lyra_insn_imm(LYRA_OP_MOV_I32, LYRA_INSN_I32(0x66), 0, &ctx);
         lyra_block_add_insn(&block, insn);
     }
     {
         struct lyra_insn *insn =
-            lyra_insn_imm(LYRA_OP_MOV_I32, LYRA_INSN_REG(0), 1);
+            lyra_insn_imm(LYRA_OP_MOV_I32, LYRA_INSN_REG(0), 1, &ctx);
+        lyra_block_add_insn(&block, insn);
+    }
+    {
+        struct lyra_insn *insn = lyra_insn_new(
+            LYRA_OP_ADD_I32_IMM, 0, LYRA_INSN_I32(0x77), 0, &ctx);
+        lyra_block_add_insn(&block, insn);
+    }
+    {
+        struct lyra_insn *insn = lyra_insn_new(
+            LYRA_OP_ADD_I32_IMM, 0, LYRA_INSN_I32(0x88), 0, &ctx);
         lyra_block_add_insn(&block, insn);
     }
     {
         struct lyra_insn *insn =
-            lyra_insn_new(LYRA_OP_ADD_I32_IMM, 0, LYRA_INSN_I32(0x77), 0);
-        lyra_block_add_insn(&block, insn);
-    }
-    {
-        struct lyra_insn *insn =
-            lyra_insn_new(LYRA_OP_ADD_I32_IMM, 0, LYRA_INSN_I32(0x88), 0);
-        lyra_block_add_insn(&block, insn);
-    }
-    {
-        struct lyra_insn *insn =
-            lyra_insn_new(LYRA_OP_LT_VAR, 0, LYRA_INSN_REG(1), 0);
+            lyra_insn_new(LYRA_OP_LT_VAR, 0, LYRA_INSN_REG(1), 0, &ctx);
         lyra_block_add_insn(&block, insn);
     }
     {
@@ -80,7 +86,9 @@ int main() {
     printf("---\n");
 
     struct lyra_comp c = {0};
-    lyra_comp_init(&c);
+    lyra_comp_init(&c, &ctx);
     lyra_function_comp(fn, &c);
     fwrite(c.source.data, 1, c.source.len, stdout);
+
+    lyra_ctx_del(&ctx);
 }

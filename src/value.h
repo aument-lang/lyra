@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#include "banned.h"
+
 enum lyra_value_type {
     LYRA_VALUE_UNTYPED = 0,
     LYRA_VALUE_ANY,
@@ -32,7 +34,8 @@ static inline const char *lyra_value_type_c(enum lyra_value_type type) {
     }
 }
 
-static inline const char *lyra_value_type_to_any_fn(enum lyra_value_type type) {
+static inline const char *
+lyra_value_type_to_any_fn(enum lyra_value_type type) {
     switch (type) {
     case LYRA_VALUE_UNTYPED:
     case LYRA_VALUE_ANY:
