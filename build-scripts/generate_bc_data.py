@@ -47,11 +47,17 @@ class Instruction:
 
     def gen_compiler(self):
         compiler = Compiler()
-        if "c_bin_op" in self.options:
+        if "c_bin_i32" in self.options:
             compiler.assign_dest_var()
             compiler.left_var()
-            compiler.raw(self.options["c_bin_op"])
-            compiler.right_var()
+            compiler.raw(self.options["c_bin_i32"])
+            compiler.right_i32()
+            return compiler.end()
+        elif "c_bin_f64" in self.options:
+            compiler.assign_dest_var()
+            compiler.left_var()
+            compiler.raw(self.options["c_bin_f64"])
+            compiler.right_f64()
             return compiler.end()
         elif "c_bin_func" in self.options:
             compiler.assign_dest_var()
@@ -73,12 +79,12 @@ Instruction("MOV_VAR", ARG_TYPE_VAR, c_codegen=gen_mov_var)
 def gen_mov_i32(compiler):
     compiler.assign_dest_var()
     compiler.right_i32()
-Instruction("MOV_I32", ARG_TYPE_VAR, ARG_TYPE_I32, c_codegen=gen_mov_i32)
+Instruction("MOV_I32", ARG_TYPE_NONE, ARG_TYPE_I32, c_codegen=gen_mov_i32)
 
 def gen_mov_f64(compiler):
     compiler.assign_dest_var()
     compiler.right_f64()
-Instruction("MOV_F64", ARG_TYPE_VAR, ARG_TYPE_F64, c_codegen=gen_mov_f64)
+Instruction("MOV_F64", ARG_TYPE_NONE, ARG_TYPE_F64, c_codegen=gen_mov_f64)
 
 for (op, c_bin_func, c_bin_op) in [
     ("MUL", "au_value_mul", "*"),
@@ -94,8 +100,8 @@ for (op, c_bin_func, c_bin_op) in [
     ("GEQ", "au_value_geq", ">="),
 ]:
     Instruction(op + "_VAR", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=c_bin_func)
-    Instruction(op + "_I32", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_op=c_bin_op)
-    Instruction(op + "_F64", ARG_TYPE_VAR, ARG_TYPE_F64, c_bin_op=c_bin_op)
+    Instruction(op + "_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_i32=c_bin_op)
+    Instruction(op + "_F64_IMM", ARG_TYPE_VAR, ARG_TYPE_F64, c_bin_f64=c_bin_op)
 
 for (op, c_bin_op) in [
     ("BOR", "|"),
@@ -104,7 +110,7 @@ for (op, c_bin_op) in [
     ("BSHL", "<<"),
     ("BSHR", ">>"),
 ]:
-    Instruction(op + "_I32", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_op=c_bin_op)
+    Instruction(op + "_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_i32=c_bin_op)
 
 # Types data
 

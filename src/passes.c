@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "bc_data/types.txt"
 #include "bit_array.h"
@@ -113,7 +114,7 @@ int lyra_pass_const_prop(struct lyra_block *block,
             break;
         }
         // Arithmetic
-        case LYRA_OP_ADD_I32: {
+        case LYRA_OP_ADD_I32_IMM: {
             assert(constants[insn->left_var].type == LYRA_VALUE_I32);
             struct lyra_value result = (struct lyra_value){
                 .data.i32 = constants[insn->left_var].data.i32 +
@@ -138,28 +139,33 @@ int lyra_pass_const_prop(struct lyra_block *block,
 int lyra_pass_purge_dead_code(struct lyra_block *block,
                               struct lyra_function_shared *shared) {
     lyra_bit_array used_vars =
-        calloc(LYRA_BA_LEN(shared->variables_len), 1);
-    for (struct lyra_insn *insn = block->insn_first; insn != 0;
-         insn = insn->next) {
-        if (lyra_insn_type_has_left_var(insn->type))
-            LYRA_BA_SET_BIT(used_vars, insn->left_var);
-        if (lyra_insn_type_has_right_var(insn->type))
-            LYRA_BA_SET_BIT(used_vars, insn->right_operand.var);
-    }
-    for (size_t i = 0; i < shared->managed_vars_len; i++) {
-        if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use, i))
-            LYRA_BA_SET_BIT(used_vars, i);
-    }
-    struct lyra_insn *insn = block->insn_first;
-    while (insn != 0) {
-        int has_dest_reg = lyra_insn_type_has_dest(insn->type);
-        if (has_dest_reg && !LYRA_BA_GET_BIT(used_vars, insn->dest_var)) {
-            printf("remove %p\n", insn);
-            struct lyra_insn *insn_next = insn->next;
-            lyra_block_remove_insn(block, insn);
-            insn = insn_next;
-        } else {
-            insn = insn->next;
+        malloc(LYRA_BA_LEN(shared->variables_len));
+    int changed = 1;
+    while (changed) {
+        changed = 0;
+        memset(used_vars, 0, LYRA_BA_LEN(shared->variables_len));
+        for (struct lyra_insn *insn = block->insn_first; insn != 0;
+             insn = insn->next) {
+            if (lyra_insn_type_has_left_var(insn->type))
+                LYRA_BA_SET_BIT(used_vars, insn->left_var);
+            if (lyra_insn_type_has_right_var(insn->type))
+                LYRA_BA_SET_BIT(used_vars, insn->right_operand.var);
+        }
+        for (size_t i = 0; i < shared->managed_vars_len; i++) {
+            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use, i))
+                LYRA_BA_SET_BIT(used_vars, i);
+        }
+        struct lyra_insn *insn = block->insn_first;
+        while (insn != 0) {
+            int has_dest_reg = lyra_insn_type_has_dest(insn->type);
+            if (has_dest_reg && !LYRA_BA_GET_BIT(used_vars, insn->dest_var)) {
+                changed = 1;
+                struct lyra_insn *insn_next = insn->next;
+                lyra_block_remove_insn(block, insn);
+                insn = insn_next;
+            } else {
+                insn = insn->next;
+            }
         }
     }
     free(used_vars);

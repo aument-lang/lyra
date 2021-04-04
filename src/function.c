@@ -46,6 +46,12 @@ void lyra_function_comp(struct lyra_function *fn, struct lyra_comp *c) {
     lyra_comp_print_str(c, "au_value_t ");
     lyra_comp_print_str(c, fn->name);
     lyra_comp_print_str(c, "(au_value_t *args) {");
+    for (size_t i = 0; i < fn->shared.variables_len; i++) {
+        lyra_comp_print_str(c, lyra_value_type_c(fn->shared.variable_types[i]));
+        lyra_comp_print_str(c, " v");
+        lyra_comp_print_i32(c, i);
+        lyra_comp_print_str(c, ";");
+    }
     for (size_t i = 0; i < fn->blocks.len; i++) {
         const struct lyra_block *block = &fn->blocks.data[i];
         for (struct lyra_insn *insn = block->insn_first; insn != 0;
