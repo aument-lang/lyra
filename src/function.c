@@ -1,4 +1,6 @@
 #include "function.h"
+#include "comp.h"
+#include "insn.h"
 
 size_t
 lyra_function_shared_add_variable(struct lyra_function_shared *shared,
@@ -12,10 +14,11 @@ lyra_function_shared_add_variable(struct lyra_function_shared *shared,
     return idx;
 }
 
-struct lyra_function *lyra_function_new() {
+struct lyra_function *lyra_function_new(char *name) {
     struct lyra_function *fn = malloc(sizeof(struct lyra_function));
     fn->blocks = (struct lyra_block_array){0};
     fn->shared = (struct lyra_function_shared){0};
+    fn->name = name;
     return fn;
 }
 
@@ -39,8 +42,19 @@ void lyra_function_finalize(struct lyra_function *fn) {
     fn->shared.managed_vars_len = fn->shared.variables_len;
 }
 
-typedef int (*lyra_block_mutator_fn_t)(
-    struct lyra_block *, struct lyra_function_shared *shared);
+void lyra_function_comp(struct lyra_function *fn, struct lyra_comp *c) {
+    lyra_comp_print_str(c, "au_value_t ");
+    lyra_comp_print_str(c, fn->name);
+    lyra_comp_print_str(c, "(au_value_t *args) {");
+    for (size_t i = 0; i < fn->blocks.len; i++) {
+        const struct lyra_block *block = &fn->blocks.data[i];
+        for (struct lyra_insn *insn = block->insn_first; insn != 0;
+             insn = insn->next) {
+            lyra_insn_comp(insn, c);
+        }
+    }
+    lyra_comp_print_str(c, "}");
+}
 
 int lyra_function_all_blocks(struct lyra_function *fn,
                              lyra_block_mutator_fn_t mutator) {

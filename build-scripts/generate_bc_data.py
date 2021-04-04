@@ -110,27 +110,27 @@ for (op, c_bin_op) in [
 
 with open("./src/bc_data/types.txt", "w") as insn_type_f:
 
-    insn_type_defs = "enum lyra_insn_type {\n"
+    insn_type_defs = "#pragma once\nenum lyra_insn_type {\n"
     for insn in Instruction.instances:
         insn_type_defs += f"LYRA_OP_{insn.name},\n"
     insn_type_defs += "};\n"
     insn_type_f.write(insn_type_defs)
 
-    insn_type_defs = "int lyra_insn_type_has_left_var(enum lyra_insn_type type) {\n"
+    insn_type_defs = "static inline int lyra_insn_type_has_left_var(enum lyra_insn_type type) {\n"
     for insn in Instruction.instances:
         if insn.left_type == ARG_TYPE_VAR:
             insn_type_defs += f"if(type == LYRA_OP_{insn.name}) return 1;\n"
     insn_type_defs += "return 0;}\n"
     insn_type_f.write(insn_type_defs)
 
-    insn_type_defs = "int lyra_insn_type_has_right_var(enum lyra_insn_type type) {\n"
+    insn_type_defs = "static inline int lyra_insn_type_has_right_var(enum lyra_insn_type type) {\n"
     for insn in Instruction.instances:
         if insn.right_type == ARG_TYPE_VAR:
             insn_type_defs += f"if(type == LYRA_OP_{insn.name}) return 1;\n"
     insn_type_defs += "return 0;}\n"
     insn_type_f.write(insn_type_defs)
 
-    insn_type_defs = "int lyra_insn_type_has_dest(enum lyra_insn_type type) {\n"
+    insn_type_defs = "static inline int lyra_insn_type_has_dest(enum lyra_insn_type type) {\n"
     for insn in Instruction.instances:
         if insn.has_dest:
             insn_type_defs += f"if(type == LYRA_OP_{insn.name}) return 1;\n"
@@ -145,7 +145,7 @@ with open("./src/bc_data/codegen.txt", "w") as insn_codegen_f:
 #include "../insn.h"
 #include "../comp.h"
 #include "types.txt"
-void lyra_insn_codegen(struct lyra_comp *c, struct lyra_insn *insn){
+void lyra_insn_comp(struct lyra_insn *insn, struct lyra_comp *c){
 """
 
     for insn in Instruction.instances:

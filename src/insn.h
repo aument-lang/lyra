@@ -27,18 +27,17 @@ struct lyra_insn {
     enum lyra_insn_type type;
 };
 
-struct lyra_insn *lyra_insn_new(enum lyra_insn_type type,
-                                size_t left_var,
+struct lyra_insn *lyra_insn_new(enum lyra_insn_type type, size_t left_var,
                                 union lyra_insn_operand right_operand,
                                 size_t dest_var);
 
-static inline struct lyra_insn *lyra_insn_new1(enum lyra_insn_type type,
-                                 size_t left_var,
-                                 size_t dest_var) {
-    return lyra_insn_new(type, left_var, LYRA_INSN_REG(0), dest_var);
+static inline struct lyra_insn *
+lyra_insn_imm(enum lyra_insn_type type,
+              union lyra_insn_operand right_operand, size_t dest_var) {
+    return lyra_insn_new(type, 0, right_operand, dest_var);
 }
 
 struct lyra_comp;
-void lyra_insn_codegen(struct lyra_comp *c, struct lyra_insn *insn);
+void lyra_insn_comp(struct lyra_insn *insn, struct lyra_comp *c);
 
 void lyra_insn_print(struct lyra_insn *insn);

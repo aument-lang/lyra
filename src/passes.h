@@ -1,8 +1,7 @@
-#include <stdlib.h>
-#include "block.h"
 #include "bit_array.h"
-#include "function.h"
 #include "block.h"
+#include "function.h"
+#include <stdlib.h>
 
 int lyra_pass_fill_inputs(struct lyra_block *block,
                           struct lyra_function_shared *shared);

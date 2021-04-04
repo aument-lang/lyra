@@ -2,7 +2,7 @@
 #include "../insn.h"
 #include "../comp.h"
 #include "types.txt"
-void lyra_insn_codegen(struct lyra_comp *c, struct lyra_insn *insn){
+void lyra_insn_comp(struct lyra_insn *insn, struct lyra_comp *c){
 if(insn->type == LYRA_OP_MOV_VAR) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);

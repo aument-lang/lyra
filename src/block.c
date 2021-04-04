@@ -29,12 +29,14 @@ void lyra_block_remove_insn(struct lyra_block *block,
                             struct lyra_insn *insn) {
     if (block->insn_first == insn) {
         block->insn_first = block->insn_first->next;
-        if (block->insn_first != 0)
-            block->insn_first->prev = 0;
     }
     if (block->insn_last == insn) {
         block->insn_last = block->insn_last->prev;
-        if (block->insn_last != 0)
-            block->insn_last->next = 0;
     }
+    if(insn->prev != 0)
+        insn->prev->next = insn->next;
+    if(insn->next != 0)
+        insn->next->prev = insn->prev;
+    insn->prev = 0;
+    insn->next = 0;
 }

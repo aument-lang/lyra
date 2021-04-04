@@ -1,3 +1,4 @@
+#pragma once
 enum lyra_insn_type {
 LYRA_OP_MOV_VAR,
 LYRA_OP_MOV_I32,
@@ -41,7 +42,7 @@ LYRA_OP_BAND_I32,
 LYRA_OP_BSHL_I32,
 LYRA_OP_BSHR_I32,
 };
-int lyra_insn_type_has_left_var(enum lyra_insn_type type) {
+static inline int lyra_insn_type_has_left_var(enum lyra_insn_type type) {
 if(type == LYRA_OP_MOV_VAR) return 1;
 if(type == LYRA_OP_MOV_I32) return 1;
 if(type == LYRA_OP_MOV_F64) return 1;
@@ -84,7 +85,7 @@ if(type == LYRA_OP_BAND_I32) return 1;
 if(type == LYRA_OP_BSHL_I32) return 1;
 if(type == LYRA_OP_BSHR_I32) return 1;
 return 0;}
-int lyra_insn_type_has_right_var(enum lyra_insn_type type) {
+static inline int lyra_insn_type_has_right_var(enum lyra_insn_type type) {
 if(type == LYRA_OP_MUL_VAR) return 1;
 if(type == LYRA_OP_DIV_VAR) return 1;
 if(type == LYRA_OP_ADD_VAR) return 1;
@@ -97,7 +98,7 @@ if(type == LYRA_OP_GT_VAR) return 1;
 if(type == LYRA_OP_LEQ_VAR) return 1;
 if(type == LYRA_OP_GEQ_VAR) return 1;
 return 0;}
-int lyra_insn_type_has_dest(enum lyra_insn_type type) {
+static inline int lyra_insn_type_has_dest(enum lyra_insn_type type) {
 if(type == LYRA_OP_MOV_VAR) return 1;
 if(type == LYRA_OP_MOV_I32) return 1;
 if(type == LYRA_OP_MOV_F64) return 1;

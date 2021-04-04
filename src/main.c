@@ -6,29 +6,30 @@
 
 #include "array.h"
 #include "bit_array.h"
-#include "insn.h"
-#include "value.h"
 #include "block.h"
+#include "insn.h"
 #include "passes.h"
+#include "value.h"
 
 int main() {
-    struct lyra_function *fn = lyra_function_new();
+    struct lyra_function *fn = lyra_function_new("main");
     lyra_function_add_variable(fn, LYRA_VALUE_ANY);
 
     struct lyra_block block;
     lyra_block_init(&block);
     {
-        struct lyra_insn *insn = lyra_insn_new1(LYRA_OP_MOV_I32, 1, 0);
+        struct lyra_insn *insn =
+            lyra_insn_imm(LYRA_OP_MOV_I32, LYRA_INSN_I32(0x66), 0);
         lyra_block_add_insn(&block, insn);
     }
     {
         struct lyra_insn *insn =
-            lyra_insn_new(LYRA_OP_ADD_I32, 0, LYRA_INSN_I32(2), 0);
+            lyra_insn_new(LYRA_OP_ADD_I32, 0, LYRA_INSN_I32(0x77), 0);
         lyra_block_add_insn(&block, insn);
     }
     {
         struct lyra_insn *insn =
-            lyra_insn_new(LYRA_OP_ADD_I32, 0, LYRA_INSN_I32(3), 0);
+            lyra_insn_new(LYRA_OP_ADD_I32, 0, LYRA_INSN_I32(0x88), 0);
         lyra_block_add_insn(&block, insn);
     }
     lyra_block_print(&block);
@@ -51,4 +52,6 @@ int main() {
 
     lyra_function_all_blocks(fn, lyra_pass_purge_dead_code);
     lyra_block_print(&fn->blocks.data[0]);
+
+    printf("---\n");
 }

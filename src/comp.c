@@ -6,7 +6,7 @@ void lyra_comp_init(struct lyra_comp *c) {
 }
 
 void lyra_comp_print_str(struct lyra_comp *c, const char *str) {
-    while(*str != 0) {
+    while (*str != 0) {
         lyra_char_array_add(&c->source, *str);
         str++;
     }

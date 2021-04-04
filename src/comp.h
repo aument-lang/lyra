@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
 #include "char_array.h"
+#include <stdint.h>
 
 struct lyra_comp {
     struct lyra_char_array source;

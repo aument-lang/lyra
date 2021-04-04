@@ -1,9 +1,9 @@
 #include <stdlib.h>
 
-#include "block.h"
-#include "bit_array.h"
-#include "function.h"
 #include "bc_data/types.txt"
+#include "bit_array.h"
+#include "block.h"
+#include "function.h"
 
 int lyra_pass_fill_inputs(struct lyra_block *block,
                           struct lyra_function_shared *shared) {
@@ -45,6 +45,12 @@ int lyra_pass_fill_inputs(struct lyra_block *block,
     return 1;
 }
 
+static inline size_t size_t_array_at(size_t *a, size_t n, size_t idx) {
+    if (idx >= n)
+        lyra_fatal_index(a, idx, n);
+    return a[idx];
+}
+
 int lyra_pass_into_semi_ssa(struct lyra_block *block,
                             struct lyra_function_shared *shared) {
     size_t *variable_mapping =
@@ -56,10 +62,13 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
          insn = insn->next) {
         int has_dest_reg = lyra_insn_type_has_dest(insn->type);
         if (lyra_insn_type_has_left_var(insn->type))
-            insn->left_var = variable_mapping[insn->left_var];
+            insn->left_var =
+                size_t_array_at(variable_mapping, shared->managed_vars_len,
+                                insn->left_var);
         if (lyra_insn_type_has_right_var(insn->type))
             insn->right_operand.var =
-                variable_mapping[insn->right_operand.var];
+                size_t_array_at(variable_mapping, shared->managed_vars_len,
+                                insn->right_operand.var);
         if (has_dest_reg) {
             if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
                                 insn->dest_var))
@@ -141,12 +150,16 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
         if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use, i))
             LYRA_BA_SET_BIT(used_vars, i);
     }
-    for (struct lyra_insn *insn = block->insn_first; insn != 0;
-         insn = insn->next) {
+    struct lyra_insn *insn = block->insn_first;
+    while (insn != 0) {
         int has_dest_reg = lyra_insn_type_has_dest(insn->type);
         if (has_dest_reg && !LYRA_BA_GET_BIT(used_vars, insn->dest_var)) {
             printf("remove %p\n", insn);
+            struct lyra_insn *insn_next = insn->next;
             lyra_block_remove_insn(block, insn);
+            insn = insn_next;
+        } else {
+            insn = insn->next;
         }
     }
     free(used_vars);
