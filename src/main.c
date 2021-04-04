@@ -4,8 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "banned.h"
-
 #include "array.h"
 #include "bit_array.h"
 #include "block.h"

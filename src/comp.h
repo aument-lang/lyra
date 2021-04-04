@@ -1,8 +1,6 @@
 #pragma once
 #include <stdint.h>
 
-#include "banned.h"
-
 #include "char_array.h"
 #include "context.h"
 

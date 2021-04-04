@@ -1,16 +1,13 @@
 #include <stdlib.h>
 
-#include "banned.h"
-
-#include "insn.h"
 #include "context.h"
+#include "insn.h"
 
 #include "bc_data/codegen.txt"
 
 struct lyra_insn *lyra_insn_new(enum lyra_insn_type type, size_t left_var,
                                 union lyra_insn_operand right_operand,
-                                size_t dest_var,
-                                struct lyra_ctx *ctx) {
+                                size_t dest_var, struct lyra_ctx *ctx) {
     struct lyra_insn *insn =
         lyra_ctx_mem_malloc(ctx, sizeof(struct lyra_insn));
     insn->prev = 0;

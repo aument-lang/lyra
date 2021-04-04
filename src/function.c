@@ -1,5 +1,3 @@
-#include "banned.h"
-
 #include "function.h"
 #include "comp.h"
 #include "context.h"
@@ -18,8 +16,7 @@ lyra_function_shared_add_variable(struct lyra_function_shared *shared,
     return idx;
 }
 
-struct lyra_function *lyra_function_new(char *name,
-                                        struct lyra_ctx *ctx) {
+struct lyra_function *lyra_function_new(char *name, struct lyra_ctx *ctx) {
     struct lyra_function *fn =
         lyra_ctx_mem_malloc(ctx, sizeof(struct lyra_function));
     fn->blocks = (struct lyra_block_array){0};

@@ -8,8 +8,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "banned.h"
-
 #include "context.h"
 #include "exception.h"
 #include "platform.h"
@@ -21,7 +19,7 @@
         size_t cap;                                                       \
     };                                                                    \
     static LYRA_UNUSED void NAME##_add(struct NAME *array, INNER el,      \
-                                       struct lyra_ctx *ctx) {        \
+                                       struct lyra_ctx *ctx) {            \
         if (array->cap == 0) {                                            \
             array->data = (INNER *)lyra_ctx_mem_malloc(                   \
                 ctx, sizeof(INNER) * IN_CAP);                             \

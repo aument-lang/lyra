@@ -1,7 +1,6 @@
-#include "comp.h"
 #include <inttypes.h>
 
-#include "banned.h"
+#include "comp.h"
 
 void lyra_comp_init(struct lyra_comp *c, struct lyra_ctx *ctx) {
     c->source = (struct lyra_char_array){0};

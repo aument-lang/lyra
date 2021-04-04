@@ -7,6 +7,4 @@
 
 #include "array.h"
 
-#include "banned.h"
-
 LYRA_ARRAY_COPY(char, lyra_char_array, 1)

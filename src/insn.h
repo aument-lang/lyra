@@ -6,8 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "banned.h"
-
 #include "bc_data/types.txt"
 #include "context.h"
 

@@ -2,8 +2,6 @@
 
 #include <stdint.h>
 
-#include "banned.h"
-
 enum lyra_value_type {
     LYRA_VALUE_UNTYPED = 0,
     LYRA_VALUE_ANY,

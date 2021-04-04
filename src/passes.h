@@ -1,7 +1,5 @@
 #include <stdlib.h>
 
-#include "banned.h"
-
 #include "bit_array.h"
 #include "block.h"
 #include "function.h"

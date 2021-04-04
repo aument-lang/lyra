@@ -1,8 +1,6 @@
 #pragma once
 #include <stdlib.h>
 
-#include "banned.h"
-
 #include "bit_array.h"
 #include "block.h"
 #include "value.h"
@@ -29,8 +27,7 @@ struct lyra_function {
     struct lyra_ctx *ctx;
 };
 
-struct lyra_function *lyra_function_new(char *name,
-                                        struct lyra_ctx *ctx);
+struct lyra_function *lyra_function_new(char *name, struct lyra_ctx *ctx);
 
 size_t lyra_function_add_block(struct lyra_function *fn,
                                struct lyra_block block);

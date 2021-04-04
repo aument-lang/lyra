@@ -1,7 +1,5 @@
 #include <string.h>
 
-#include "banned.h"
-
 #include "block.h"
 #include "comp.h"
 #include "function.h"
