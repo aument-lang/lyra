@@ -43,5 +43,9 @@ void lyra_block_print(struct lyra_block *block);
 
 void lyra_block_add_insn(struct lyra_block *block, struct lyra_insn *insn);
 
+void lyra_block_insert_insn(struct lyra_block *block,
+                            struct lyra_insn *after_insn,
+                            struct lyra_insn *insn);
+
 void lyra_block_remove_insn(struct lyra_block *block,
                             struct lyra_insn *insn);

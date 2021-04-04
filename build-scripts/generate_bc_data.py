@@ -77,6 +77,8 @@ class Instruction:
         elif "c_codegen" in self.options:
             self.options["c_codegen"](compiler)
             return compiler.end()
+        else:
+            return ""
 
 # Move operations
 
@@ -95,6 +97,22 @@ def gen_mov_f64(compiler):
     compiler.assign_dest_var()
     compiler.right_f64()
 Instruction("MOV_F64", ARG_TYPE_NONE, ARG_TYPE_F64, c_codegen=gen_mov_f64)
+
+# Value assertion
+
+def gen_ensure_i32(compiler):
+    compiler.assign_dest_var()
+    compiler.raw("au_value_int(")
+    compiler.left_var()
+    compiler.raw(")")
+Instruction("ENSURE_I32", ARG_TYPE_VAR, c_codegen=gen_ensure_i32)
+
+def gen_ensure_f64(compiler):
+    compiler.assign_dest_var()
+    compiler.raw("au_value_float(")
+    compiler.left_var()
+    compiler.raw(")")
+Instruction("ENSURE_F64", ARG_TYPE_VAR, c_codegen=gen_ensure_f64)
 
 # Binary operations
 
@@ -134,7 +152,12 @@ for (op, c_bin_func, c_bin_op) in [
 
 # Call instructions
 
-
+def gen_load_arg(compiler):
+    compiler.assign_dest_var()
+    compiler.raw("args[")
+    compiler.right_i32()
+    compiler.raw("]")
+Instruction("LOAD_ARG", ARG_TYPE_NONE, ARG_TYPE_I32, c_codegen=gen_load_arg)
 
 # Types data
 

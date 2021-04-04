@@ -27,6 +27,22 @@ lyra_comp_print_f64(c,insn->right_operand.f64);
 lyra_comp_print_str(c,";");
 return;
 }
+if(insn->type == LYRA_OP_ENSURE_I32) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_str(c,"au_value_int(");
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
+lyra_comp_print_str(c,")");
+lyra_comp_print_str(c,";");
+return;
+}
+if(insn->type == LYRA_OP_ENSURE_F64) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_str(c,"au_value_float(");
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
+lyra_comp_print_str(c,")");
+lyra_comp_print_str(c,";");
+return;
+}
 if(insn->type == LYRA_OP_MUL_VAR) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"au_value_mul(");
@@ -350,6 +366,14 @@ lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_pri
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,">=");
 lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,";");
+return;
+}
+if(insn->type == LYRA_OP_LOAD_ARG) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_str(c,"args[");
+lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"]");
 lyra_comp_print_str(c,";");
 return;
 }

@@ -115,7 +115,7 @@ int lyra_pass_const_prop(struct lyra_block *block,
                                 insn->dest_var))
                 continue;
             constants[insn->dest_var] = (struct lyra_value){
-                .data.i32 = (int32_t)insn->left_var,
+                .data.i32 = insn->right_operand.i32,
                 .type = LYRA_VALUE_I32,
             };
             break;
@@ -125,13 +125,15 @@ int lyra_pass_const_prop(struct lyra_block *block,
                                 insn->dest_var))
                 continue;
             constants[insn->dest_var] = (struct lyra_value){
-                .data.i32 = (int32_t)insn->left_var,
+                .data.i32 = insn->right_operand.i32,
                 .type = LYRA_VALUE_BOOL,
             };
             break;
         }
         // Arithmetic
         case LYRA_OP_ADD_I32_IMM: {
+            if (constants[insn->left_var].type == LYRA_VALUE_UNTYPED)
+                continue;
             assert(constants[insn->left_var].type == LYRA_VALUE_I32);
             struct lyra_value result = (struct lyra_value){
                 .data.i32 = constants[insn->left_var].data.i32 +
@@ -300,17 +302,77 @@ int lyra_pass_type_inference(struct lyra_block *block,
         else if (shared->variable_types[VAR] != TYPE)                     \
             shared->variable_types[VAR] = LYRA_VALUE_ANY;                 \
     } while (0)
-        case LYRA_OP_MOV_I32: {
+        case LYRA_OP_MOV_I32:
+        case LYRA_OP_ENSURE_I32:
+        case LYRA_OP_MUL_I32_IMM:
+        case LYRA_OP_DIV_I32_IMM:
+        case LYRA_OP_ADD_I32_IMM:
+        case LYRA_OP_SUB_I32_IMM:
+        case LYRA_OP_MOD_I32_IMM:
+        case LYRA_OP_BOR_I32_IMM:
+        case LYRA_OP_BXOR_I32_IMM:
+        case LYRA_OP_BAND_I32_IMM:
+        case LYRA_OP_BSHL_I32_IMM:
+        case LYRA_OP_BSHR_I32_IMM: {
             SET_TYPE(insn->dest_var, LYRA_VALUE_I32);
             break;
         }
-        case LYRA_OP_MOV_F64: {
+        case LYRA_OP_MOV_F64:
+        case LYRA_OP_ENSURE_F64:
+        case LYRA_OP_MUL_F64_IMM:
+        case LYRA_OP_DIV_F64_IMM:
+        case LYRA_OP_ADD_F64_IMM:
+        case LYRA_OP_SUB_F64_IMM:
+        case LYRA_OP_MOD_F64_IMM: {
             SET_TYPE(insn->dest_var, LYRA_VALUE_F64);
+            break;
+        }
+        case LYRA_OP_LT_VAR:
+        case LYRA_OP_LT_I32_IMM:
+        case LYRA_OP_LT_F64_IMM:
+        case LYRA_OP_GT_VAR:
+        case LYRA_OP_GT_I32_IMM:
+        case LYRA_OP_GT_F64_IMM:
+        case LYRA_OP_LEQ_VAR:
+        case LYRA_OP_LEQ_I32_IMM:
+        case LYRA_OP_LEQ_F64_IMM:
+        case LYRA_OP_GEQ_VAR:
+        case LYRA_OP_GEQ_I32_IMM:
+        case LYRA_OP_GEQ_F64_IMM: {
+            SET_TYPE(insn->dest_var, LYRA_VALUE_BOOL);
+            break;
+        }
+        default: {
+            if (lyra_insn_type_has_dest(insn->type)) {
+                shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;
+            }
+        }
+#undef SET_TYPE
+        }
+    }
+    return 1;
+}
+
+int lyra_pass_immediate_binop_dynamic_lhs(
+    struct lyra_block *block, struct lyra_function_shared *shared,
+    struct lyra_ctx *ctx) {
+    for (struct lyra_insn *insn = block->insn_first; insn != 0;
+         insn = insn->next) {
+        switch (insn->type) {
+        case LYRA_OP_ADD_I32_IMM: {
+            if (shared->variable_types[insn->left_var] != LYRA_VALUE_I32) {
+                const size_t new_var = lyra_function_shared_add_variable(
+                    shared, LYRA_VALUE_I32, ctx);
+                struct lyra_insn *new_insn = lyra_insn_imm(
+                    LYRA_OP_ENSURE_I32, LYRA_INSN_REG(insn->left_var),
+                    new_var, ctx);
+                lyra_block_insert_insn(block, insn->prev, new_insn);
+                insn->left_var = new_var;
+            }
             break;
         }
         default:
             break;
-#undef SET_TYPE
         }
     }
     return 1;

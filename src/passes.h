@@ -23,3 +23,7 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
 int lyra_pass_type_inference(struct lyra_block *block,
                              struct lyra_function_shared *shared,
                              struct lyra_ctx *ctx);
+
+int lyra_pass_immediate_binop_dynamic_lhs(
+    struct lyra_block *block, struct lyra_function_shared *shared,
+    struct lyra_ctx *ctx);

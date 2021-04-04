@@ -79,6 +79,27 @@ void lyra_block_add_insn(struct lyra_block *block,
     }
 }
 
+void lyra_block_insert_insn(struct lyra_block *block,
+                            struct lyra_insn *after_insn,
+                            struct lyra_insn *insn) {
+    struct lyra_insn *next_insn = after_insn->next;
+
+    if (after_insn == 0) {
+        block->insn_first = insn;
+    } else {
+        after_insn->next = insn;
+    }
+
+    if (next_insn == 0) {
+        block->insn_last = insn;
+    } else {
+        next_insn->prev = insn;
+    }
+
+    insn->prev = after_insn;
+    insn->next = next_insn;
+}
+
 void lyra_block_remove_insn(struct lyra_block *block,
                             struct lyra_insn *insn) {
     if (block->insn_first == insn) {
