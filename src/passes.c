@@ -146,27 +146,65 @@ int lyra_pass_const_prop(struct lyra_block *block,
             continue;
         }
         // Comparison
-        case LYRA_OP_LT_VAR: {
-            const enum lyra_value_type left_type =
-                constants[insn->left_var].type;
-            const enum lyra_value_type right_type =
-                constants[insn->right_operand.var].type;
-            if (left_type == LYRA_VALUE_I32 &&
-                right_type == LYRA_VALUE_I32) {
-                struct lyra_value result = (struct lyra_value){
-                    .data.i32 =
-                        constants[insn->left_var].data.i32 <
-                        constants[insn->right_operand.var].data.i32,
-                    .type = LYRA_VALUE_BOOL,
-                };
-                constants[insn->dest_var] = result;
-                shared->variable_types[insn->dest_var] = LYRA_VALUE_BOOL;
-                insn->type = LYRA_OP_MOV_BOOL;
-                insn->left_var = 0;
-                insn->right_operand = LYRA_INSN_I32(result.data.i32);
-            }
-            continue;
-        }
+#define COMP_OP(LYRA_OP_BASE, C_OP)                                       \
+    {                                                                     \
+        const enum lyra_value_type left_type =                            \
+            constants[insn->left_var].type;                               \
+        const enum lyra_value_type right_type =                           \
+            constants[insn->right_operand.var].type;                      \
+        if (left_type == LYRA_VALUE_I32 &&                                \
+            right_type == LYRA_VALUE_I32) {                               \
+            struct lyra_value result = (struct lyra_value){               \
+                .data.i32 =                                               \
+                    constants[insn->left_var]                             \
+                        .data.i32 C_OP constants[insn->right_operand.var] \
+                        .data.i32,                                        \
+                .type = LYRA_VALUE_BOOL,                                  \
+            };                                                            \
+            constants[insn->dest_var] = result;                           \
+            shared->variable_types[insn->dest_var] = LYRA_VALUE_BOOL;     \
+            insn->type = LYRA_OP_MOV_BOOL;                                \
+            insn->left_var = 0;                                           \
+            insn->right_operand = LYRA_INSN_I32(result.data.i32);         \
+        } else if (left_type == LYRA_VALUE_F64 &&                         \
+                   right_type == LYRA_VALUE_F64) {                        \
+            struct lyra_value result = (struct lyra_value){               \
+                .data.i32 =                                               \
+                    constants[insn->left_var]                             \
+                        .data.f64 C_OP constants[insn->right_operand.var] \
+                        .data.f64,                                        \
+                .type = LYRA_VALUE_BOOL,                                  \
+            };                                                            \
+            constants[insn->dest_var] = result;                           \
+            shared->variable_types[insn->dest_var] = LYRA_VALUE_BOOL;     \
+            insn->type = LYRA_OP_MOV_BOOL;                                \
+            insn->left_var = 0;                                           \
+            insn->right_operand = LYRA_INSN_I32(result.data.i32);         \
+        } /* Left is undetermined, right side is constant */              \
+        else if (right_type == LYRA_VALUE_I32) {                          \
+            insn->type = LYRA_OP_BASE##_I32_IMM;                          \
+            insn->right_operand = LYRA_INSN_I32(                          \
+                constants[insn->right_operand.var].data.i32);             \
+        } else if (right_type == LYRA_VALUE_F64) {                        \
+            insn->type = LYRA_OP_BASE##_F64_IMM;                          \
+            insn->right_operand = LYRA_INSN_F64(                          \
+                constants[insn->right_operand.var].data.f64);             \
+        }                                                                 \
+        continue;                                                         \
+    }
+        case LYRA_OP_EQ_VAR:
+            COMP_OP(LYRA_OP_EQ, ==)
+        case LYRA_OP_NEQ_VAR:
+            COMP_OP(LYRA_OP_NEQ, !=)
+        case LYRA_OP_LT_VAR:
+            COMP_OP(LYRA_OP_LT, <)
+        case LYRA_OP_GT_VAR:
+            COMP_OP(LYRA_OP_GT, >)
+        case LYRA_OP_LEQ_VAR:
+            COMP_OP(LYRA_OP_LEQ, <=)
+        case LYRA_OP_GEQ_VAR:
+            COMP_OP(LYRA_OP_GEQ, >=)
+#undef COMP_OP
         default:
             break;
         }
