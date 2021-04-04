@@ -371,6 +371,18 @@ int lyra_pass_immediate_binop_dynamic_lhs(
             }
             break;
         }
+        case LYRA_OP_ADD_F64_IMM: {
+            if (shared->variable_types[insn->left_var] != LYRA_VALUE_F64) {
+                const size_t new_var = lyra_function_shared_add_variable(
+                    shared, LYRA_VALUE_F64, ctx);
+                struct lyra_insn *new_insn = lyra_insn_imm(
+                    LYRA_OP_ENSURE_F64, LYRA_INSN_REG(insn->left_var),
+                    new_var, ctx);
+                lyra_block_insert_insn(block, insn->prev, new_insn);
+                insn->left_var = new_var;
+            }
+            break;
+        }
         default:
             break;
         }
