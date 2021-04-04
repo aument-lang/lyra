@@ -4,8 +4,10 @@
 #include "insn.h"
 
 enum lyra_block_connector_type {
-    LYRA_BLOCK_RET = 0,
+    LYRA_BLOCK_FALLTHROUGH = 0,
+    LYRA_BLOCK_RET,
     LYRA_BLOCK_JMP,
+    // Conditional jumps (with implicit fallthrough)
     LYRA_BLOCK_JIF,
     LYRA_BLOCK_JNIF,
 };

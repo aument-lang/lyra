@@ -172,6 +172,31 @@ int lyra_pass_const_prop(struct lyra_block *block,
         }
     }
 
+    switch (block->connector.type) {
+    case LYRA_BLOCK_JIF: {
+        if (constants[block->connector.var].type == LYRA_VALUE_BOOL) {
+            if (constants[block->connector.var].data.i32 == 1) {
+                block->connector.type = LYRA_BLOCK_JMP;
+            } else {
+                block->connector.type = LYRA_BLOCK_FALLTHROUGH;
+            }
+        }
+        break;
+    }
+    case LYRA_BLOCK_JNIF: {
+        if (constants[block->connector.var].type == LYRA_VALUE_BOOL) {
+            if (constants[block->connector.var].data.i32 == 0) {
+                block->connector.type = LYRA_BLOCK_JMP;
+            } else {
+                block->connector.type = LYRA_BLOCK_FALLTHROUGH;
+            }
+        }
+        break;
+    }
+    default:
+        break;
+    }
+
     free(constants);
     return 1;
 }

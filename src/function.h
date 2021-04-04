@@ -23,11 +23,11 @@ lyra_function_shared_add_variable(struct lyra_function_shared *shared,
 struct lyra_function {
     struct lyra_block_array blocks;
     struct lyra_function_shared shared;
-    char *name;
+    size_t name;
     struct lyra_ctx *ctx;
 };
 
-struct lyra_function *lyra_function_new(char *name, struct lyra_ctx *ctx);
+struct lyra_function *lyra_function_new(size_t name, struct lyra_ctx *ctx);
 
 size_t lyra_function_add_block(struct lyra_function *fn,
                                struct lyra_block block);

@@ -17,7 +17,7 @@ int main() {
     struct lyra_ctx ctx;
     lyra_ctx_init(&ctx);
 
-    struct lyra_function *fn = lyra_function_new("main", &ctx);
+    struct lyra_function *fn = lyra_function_new(0, &ctx);
     lyra_function_add_variable(fn, LYRA_VALUE_UNTYPED);
     lyra_function_add_variable(fn, LYRA_VALUE_UNTYPED);
 

@@ -8,6 +8,9 @@ void lyra_block_connector_comp(const struct lyra_block_connector *conn,
                                const struct lyra_function_shared *shared,
                                struct lyra_comp *c) {
     switch (conn->type) {
+    case LYRA_BLOCK_FALLTHROUGH: {
+        break;
+    }
     case LYRA_BLOCK_RET: {
         lyra_comp_print_str(c, "return ");
         const char *convert_fn =
@@ -21,11 +24,13 @@ void lyra_block_connector_comp(const struct lyra_block_connector *conn,
             lyra_comp_print_str(c, "v");
             lyra_comp_print_isize(c, conn->var);
         }
+        lyra_comp_print_str(c, ";");
         break;
     }
     case LYRA_BLOCK_JMP: {
         lyra_comp_print_str(c, "goto L");
         lyra_comp_print_isize(c, conn->label);
+        lyra_comp_print_str(c, ";");
         break;
     }
     case LYRA_BLOCK_JIF: {
@@ -34,6 +39,7 @@ void lyra_block_connector_comp(const struct lyra_block_connector *conn,
         lyra_comp_print_isize(c, conn->var);
         lyra_comp_print_str(c, ") goto L");
         lyra_comp_print_isize(c, conn->label);
+        lyra_comp_print_str(c, ";");
         break;
     }
     case LYRA_BLOCK_JNIF: {
@@ -42,10 +48,10 @@ void lyra_block_connector_comp(const struct lyra_block_connector *conn,
         lyra_comp_print_isize(c, conn->var);
         lyra_comp_print_str(c, ") goto L");
         lyra_comp_print_isize(c, conn->label);
+        lyra_comp_print_str(c, ";");
         break;
     }
     }
-    lyra_comp_print_str(c, ";");
 }
 
 void lyra_block_init(struct lyra_block *block) {
