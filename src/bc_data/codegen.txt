@@ -15,6 +15,12 @@ lyra_comp_print_i32(c,insn->right_operand.i32);
 lyra_comp_print_str(c,";");
 return;
 }
+if(insn->type == LYRA_OP_MOV_BOOL) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,";");
+return;
+}
 if(insn->type == LYRA_OP_MOV_F64) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_f64(c,insn->right_operand.f64);
@@ -148,6 +154,46 @@ lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_pri
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"%");
 lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,";");
+return;
+}
+if(insn->type == LYRA_OP_BOR_I32_IMM) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
+lyra_comp_print_str(c,"|");
+lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,";");
+return;
+}
+if(insn->type == LYRA_OP_BXOR_I32_IMM) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
+lyra_comp_print_str(c,"^");
+lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,";");
+return;
+}
+if(insn->type == LYRA_OP_BAND_I32_IMM) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
+lyra_comp_print_str(c,"&");
+lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,";");
+return;
+}
+if(insn->type == LYRA_OP_BSHL_I32_IMM) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
+lyra_comp_print_str(c,"<<");
+lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,";");
+return;
+}
+if(insn->type == LYRA_OP_BSHR_I32_IMM) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
+lyra_comp_print_str(c,">>");
+lyra_comp_print_i32(c,insn->right_operand.i32);
 lyra_comp_print_str(c,";");
 return;
 }
@@ -304,46 +350,6 @@ lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_pri
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,">=");
 lyra_comp_print_f64(c,insn->right_operand.f64);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_BOR_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"|");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_BXOR_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"^");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_BAND_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"&");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_BSHL_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"<<");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_BSHR_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,">>");
-lyra_comp_print_i32(c,insn->right_operand.i32);
 lyra_comp_print_str(c,";");
 return;
 }

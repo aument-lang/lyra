@@ -2,6 +2,7 @@ ARG_TYPE_NONE = 0
 ARG_TYPE_VAR = 1
 ARG_TYPE_I32 = 2
 ARG_TYPE_F64 = 2
+ARG_TYPE_BOOL = 3
 
 class Compiler:
     
@@ -59,6 +60,12 @@ class Instruction:
             compiler.raw(self.options["c_bin_f64"])
             compiler.right_f64()
             return compiler.end()
+        elif "c_bin_bool" in self.options:
+            compiler.assign_dest_var()
+            compiler.left_var()
+            compiler.raw(self.options["c_bin_bool"])
+            compiler.right_var()
+            return compiler.end()
         elif "c_bin_func" in self.options:
             compiler.assign_dest_var()
             compiler.raw(self.options["c_bin_func"] + "(")
@@ -82,6 +89,7 @@ def gen_mov_i32(compiler):
     compiler.assign_dest_var()
     compiler.right_i32()
 Instruction("MOV_I32", ARG_TYPE_NONE, ARG_TYPE_I32, c_codegen=gen_mov_i32)
+Instruction("MOV_BOOL", ARG_TYPE_NONE, ARG_TYPE_BOOL, c_codegen=gen_mov_i32)
 
 def gen_mov_f64(compiler):
     compiler.assign_dest_var()
@@ -96,12 +104,6 @@ for (op, c_bin_func, c_bin_op) in [
     ("ADD", "au_value_add", "+"),
     ("SUB", "au_value_sub", "-"),
     ("MOD", "au_value_mod", "%"),
-    ("EQ" , "au_value_eq", "=="),
-    ("NEQ", "au_value_neq", "!="),
-    ("LT" , "au_value_lt", "<"),
-    ("GT" , "au_value_gt", ">"),
-    ("LEQ", "au_value_leq", "<="),
-    ("GEQ", "au_value_geq", ">="),
 ]:
     Instruction(op + "_VAR", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=c_bin_func)
     Instruction(op + "_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_i32=c_bin_op)
@@ -115,6 +117,20 @@ for (op, c_bin_op) in [
     ("BSHR", ">>"),
 ]:
     Instruction(op + "_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_i32=c_bin_op)
+
+# Comparison operations
+
+for (op, c_bin_func, c_bin_op) in [
+    ("EQ" , "au_value_eq", "=="),
+    ("NEQ", "au_value_neq", "!="),
+    ("LT" , "au_value_lt", "<"),
+    ("GT" , "au_value_gt", ">"),
+    ("LEQ", "au_value_leq", "<="),
+    ("GEQ", "au_value_geq", ">="),
+]:
+    Instruction(op + "_VAR", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=c_bin_func)
+    Instruction(op + "_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_i32=c_bin_op)
+    Instruction(op + "_F64_IMM", ARG_TYPE_VAR, ARG_TYPE_F64, c_bin_f64=c_bin_op)
 
 # Call instructions
 

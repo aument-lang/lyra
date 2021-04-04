@@ -117,6 +117,16 @@ int lyra_pass_const_prop(struct lyra_block *block,
             };
             break;
         }
+        case LYRA_OP_MOV_BOOL: {
+            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
+                                insn->dest_var))
+                continue;
+            constants[insn->dest_var] = (struct lyra_value){
+                .data.i32 = (int32_t)insn->left_var,
+                .type = LYRA_VALUE_BOOL,
+            };
+            break;
+        }
         // Arithmetic
         case LYRA_OP_ADD_I32_IMM: {
             assert(constants[insn->left_var].type == LYRA_VALUE_I32);
@@ -126,9 +136,32 @@ int lyra_pass_const_prop(struct lyra_block *block,
                 .type = LYRA_VALUE_I32,
             };
             constants[insn->dest_var] = result;
+            shared->variable_types[insn->dest_var] = LYRA_VALUE_I32;
             insn->type = LYRA_OP_MOV_I32;
             insn->left_var = 0;
             insn->right_operand = LYRA_INSN_I32(result.data.i32);
+            continue;
+        }
+        // Comparison
+        case LYRA_OP_LT_VAR: {
+            const enum lyra_value_type left_type =
+                constants[insn->left_var].type;
+            const enum lyra_value_type right_type =
+                constants[insn->right_operand.var].type;
+            if (left_type == LYRA_VALUE_I32 &&
+                right_type == LYRA_VALUE_I32) {
+                struct lyra_value result = (struct lyra_value){
+                    .data.i32 =
+                        constants[insn->left_var].data.i32 <
+                        constants[insn->right_operand.var].data.i32,
+                    .type = LYRA_VALUE_BOOL,
+                };
+                constants[insn->dest_var] = result;
+                shared->variable_types[insn->dest_var] = LYRA_VALUE_BOOL;
+                insn->type = LYRA_OP_MOV_BOOL;
+                insn->left_var = 0;
+                insn->right_operand = LYRA_INSN_I32(result.data.i32);
+            }
             continue;
         }
         default:
@@ -185,22 +218,24 @@ int lyra_pass_type_inference(struct lyra_block *block,
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
         switch (insn->type) {
+#define SET_TYPE(VAR, TYPE)                                               \
+    do {                                                                  \
+        if (shared->variable_types[VAR] == LYRA_VALUE_UNTYPED)            \
+            shared->variable_types[VAR] = TYPE;                           \
+        else if (shared->variable_types[VAR] != TYPE)                     \
+            shared->variable_types[VAR] = LYRA_VALUE_ANY;                 \
+    } while (0)
         case LYRA_OP_MOV_I32: {
-            shared->variable_types[insn->dest_var] = LYRA_VALUE_I32;
+            SET_TYPE(insn->dest_var, LYRA_VALUE_I32);
             break;
         }
         case LYRA_OP_MOV_F64: {
-            shared->variable_types[insn->dest_var] = LYRA_VALUE_F64;
-            break;
-        }
-        case LYRA_OP_MOV_VAR: {
-            // TODO
-            // shared->variable_types[insn->dest_var] =
-            // shared->variable_types[insn->right_operand.var];
+            SET_TYPE(insn->dest_var, LYRA_VALUE_F64);
             break;
         }
         default:
             break;
+#undef SET_TYPE
         }
     }
     return 1;

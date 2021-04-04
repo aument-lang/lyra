@@ -1,8 +1,9 @@
 #include "block.h"
 #include "comp.h"
 
-void lyra_block_connector_comp(struct lyra_block_connector *conn, struct lyra_comp *c) {
-    switch(conn->type) {
+void lyra_block_connector_comp(struct lyra_block_connector *conn,
+                               struct lyra_comp *c) {
+    switch (conn->type) {
     case LYRA_BLOCK_RET: {
         lyra_comp_print_str(c, "return v");
         lyra_comp_print_isize(c, conn->var);
@@ -13,14 +14,14 @@ void lyra_block_connector_comp(struct lyra_block_connector *conn, struct lyra_co
         lyra_comp_print_isize(c, conn->label);
         break;
     }
-    case LYRA_BLOCK_JTRUE: {
+    case LYRA_BLOCK_JIF: {
         lyra_comp_print_str(c, "if(v");
         lyra_comp_print_isize(c, conn->var);
         lyra_comp_print_str(c, ") goto L");
         lyra_comp_print_isize(c, conn->label);
         break;
     }
-    case LYRA_BLOCK_JFALSE: {
+    case LYRA_BLOCK_JNIF: {
         lyra_comp_print_str(c, "if(!v");
         lyra_comp_print_isize(c, conn->var);
         lyra_comp_print_str(c, ") goto L");

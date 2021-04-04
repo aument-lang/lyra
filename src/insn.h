@@ -15,6 +15,7 @@ union lyra_insn_operand {
 };
 
 #define LYRA_INSN_I32(X) ((union lyra_insn_operand){.i32 = (X)})
+#define LYRA_INSN_BOOL(X) ((union lyra_insn_operand){.i32 = (X)})
 #define LYRA_INSN_F64(X) ((union lyra_insn_operand){.f64 = (X)})
 #define LYRA_INSN_REG(X) ((union lyra_insn_operand){.var = (X)})
 

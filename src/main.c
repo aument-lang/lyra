@@ -14,7 +14,8 @@
 
 int main() {
     struct lyra_function *fn = lyra_function_new("main");
-    lyra_function_add_variable(fn, LYRA_VALUE_ANY);
+    lyra_function_add_variable(fn, LYRA_VALUE_UNTYPED);
+    lyra_function_add_variable(fn, LYRA_VALUE_UNTYPED);
 
     struct lyra_block block;
     lyra_block_init(&block);
@@ -26,12 +27,22 @@ int main() {
     }
     {
         struct lyra_insn *insn =
+            lyra_insn_imm(LYRA_OP_MOV_I32, LYRA_INSN_REG(0), 1);
+        lyra_block_add_insn(&block, insn);
+    }
+    {
+        struct lyra_insn *insn =
             lyra_insn_new(LYRA_OP_ADD_I32_IMM, 0, LYRA_INSN_I32(0x77), 0);
         lyra_block_add_insn(&block, insn);
     }
     {
         struct lyra_insn *insn =
             lyra_insn_new(LYRA_OP_ADD_I32_IMM, 0, LYRA_INSN_I32(0x88), 0);
+        lyra_block_add_insn(&block, insn);
+    }
+    {
+        struct lyra_insn *insn =
+            lyra_insn_new(LYRA_OP_LT_VAR, 0, LYRA_INSN_REG(1), 0);
         lyra_block_add_insn(&block, insn);
     }
     {
@@ -52,12 +63,12 @@ int main() {
 
     printf("---\n");
 
-    lyra_function_all_blocks(fn, lyra_pass_const_prop);
+    lyra_function_all_blocks(fn, lyra_pass_type_inference);
     lyra_block_print(&fn->blocks.data[0]);
 
     printf("---\n");
 
-    lyra_function_all_blocks(fn, lyra_pass_type_inference);
+    lyra_function_all_blocks(fn, lyra_pass_const_prop);
     lyra_block_print(&fn->blocks.data[0]);
 
     printf("---\n");

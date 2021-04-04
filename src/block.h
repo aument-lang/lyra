@@ -10,10 +10,10 @@ enum lyra_block_connector_type {
     LYRA_BLOCK_JNIF,
 };
 
-static inline int lyra_block_connector_type_has_var(enum lyra_block_connector_type type) {
-    return type == LYRA_BLOCK_RET ||
-        type == LYRA_BLOCK_JIF ||
-        type == LYRA_BLOCK_JNIF;
+static inline int
+lyra_block_connector_type_has_var(enum lyra_block_connector_type type) {
+    return type == LYRA_BLOCK_RET || type == LYRA_BLOCK_JIF ||
+           type == LYRA_BLOCK_JNIF;
 }
 
 struct lyra_block_connector {
@@ -22,7 +22,8 @@ struct lyra_block_connector {
     size_t label;
 };
 
-void lyra_block_connector_comp(struct lyra_block_connector *conn, struct lyra_comp *c);
+void lyra_block_connector_comp(struct lyra_block_connector *conn,
+                               struct lyra_comp *c);
 
 struct lyra_block {
     struct lyra_insn *insn_first;

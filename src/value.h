@@ -3,9 +3,11 @@
 #include <stdint.h>
 
 enum lyra_value_type {
-    LYRA_VALUE_ANY = 0,
+    LYRA_VALUE_UNTYPED,
+    LYRA_VALUE_ANY,
     LYRA_VALUE_I32,
     LYRA_VALUE_F64,
+    LYRA_VALUE_BOOL,
 };
 
 struct lyra_value {
@@ -21,6 +23,7 @@ static inline const char *lyra_value_type_c(enum lyra_value_type type) {
     case LYRA_VALUE_ANY:
         return "au_value_t";
     case LYRA_VALUE_I32:
+    case LYRA_VALUE_BOOL:
         return "int32_t";
     case LYRA_VALUE_F64:
         return "double";
