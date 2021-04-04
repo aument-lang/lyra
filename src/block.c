@@ -1,4 +1,35 @@
 #include "block.h"
+#include "comp.h"
+
+void lyra_block_connector_comp(struct lyra_block_connector *conn, struct lyra_comp *c) {
+    switch(conn->type) {
+    case LYRA_BLOCK_RET: {
+        lyra_comp_print_str(c, "return v");
+        lyra_comp_print_isize(c, conn->var);
+        break;
+    }
+    case LYRA_BLOCK_JMP: {
+        lyra_comp_print_str(c, "goto L");
+        lyra_comp_print_isize(c, conn->label);
+        break;
+    }
+    case LYRA_BLOCK_JTRUE: {
+        lyra_comp_print_str(c, "if(v");
+        lyra_comp_print_isize(c, conn->var);
+        lyra_comp_print_str(c, ") goto L");
+        lyra_comp_print_isize(c, conn->label);
+        break;
+    }
+    case LYRA_BLOCK_JFALSE: {
+        lyra_comp_print_str(c, "if(!v");
+        lyra_comp_print_isize(c, conn->var);
+        lyra_comp_print_str(c, ") goto L");
+        lyra_comp_print_isize(c, conn->label);
+        break;
+    }
+    }
+    lyra_comp_print_str(c, ";");
+}
 
 void lyra_block_init(struct lyra_block *block) {
     *block = (struct lyra_block){0};

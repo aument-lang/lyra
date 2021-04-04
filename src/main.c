@@ -18,6 +18,7 @@ int main() {
 
     struct lyra_block block;
     lyra_block_init(&block);
+
     {
         struct lyra_insn *insn =
             lyra_insn_imm(LYRA_OP_MOV_I32, LYRA_INSN_I32(0x66), 0);
@@ -34,10 +35,10 @@ int main() {
         lyra_block_add_insn(&block, insn);
     }
     {
-        struct lyra_insn *insn =
-            lyra_insn_new(LYRA_OP_RET, 0, LYRA_INSN_I32(0), 0);
-        lyra_block_add_insn(&block, insn);
+        block.connector.type = LYRA_BLOCK_RET;
+        block.connector.var = 0;
     }
+
     lyra_block_print(&block);
     lyra_function_add_block(fn, block);
     lyra_function_finalize(fn);

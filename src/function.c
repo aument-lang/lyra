@@ -62,6 +62,9 @@ void lyra_function_comp(struct lyra_function *fn, struct lyra_comp *c) {
             lyra_insn_comp(insn, c);
             lyra_comp_print_str(c, "\n");
         }
+        lyra_comp_print_str(c, "  ");
+        lyra_block_connector_comp(&block->connector, c);
+        lyra_comp_print_str(c, "\n");
     }
     lyra_comp_print_str(c, "}");
 }

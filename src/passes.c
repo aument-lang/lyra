@@ -88,6 +88,10 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
         }
     }
 
+    if (lyra_block_connector_type_has_var(block->connector.type)) {
+        block->connector.var = variable_mapping[block->connector.var];
+    }
+
     free(variable_mapping);
     return 1;
 }
@@ -153,6 +157,9 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
         for (size_t i = 0; i < shared->managed_vars_len; i++) {
             if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use, i))
                 LYRA_BA_SET_BIT(used_vars, i);
+        }
+        if (lyra_block_connector_type_has_var(block->connector.type)) {
+            LYRA_BA_SET_BIT(used_vars, block->connector.var);
         }
         struct lyra_insn *insn = block->insn_first;
         while (insn != 0) {

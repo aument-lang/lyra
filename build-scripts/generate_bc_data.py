@@ -118,10 +118,6 @@ for (op, c_bin_op) in [
 
 # Call instructions
 
-def gen_ret_var(compiler):
-    compiler.raw("return ")
-    compiler.left_var()
-Instruction("RET", ARG_TYPE_VAR, c_codegen=gen_ret_var, has_side_effect=True)
 
 
 # Types data

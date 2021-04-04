@@ -24,5 +24,7 @@ static inline const char *lyra_value_type_c(enum lyra_value_type type) {
         return "int32_t";
     case LYRA_VALUE_F64:
         return "double";
+    default:
+        return 0;
     }
 }
