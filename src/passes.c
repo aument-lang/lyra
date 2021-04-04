@@ -176,6 +176,7 @@ int lyra_pass_const_prop(struct lyra_block *block,
 int lyra_pass_purge_dead_code(struct lyra_block *block,
                               struct lyra_function_shared *shared) {
     lyra_bit_array used_vars = malloc(LYRA_BA_LEN(shared->variables_len));
+    lyra_bit_array dead_vars = calloc(LYRA_BA_LEN(shared->variables_len), 1);
     int changed = 1;
     while (changed) {
         changed = 0;
@@ -201,6 +202,7 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
                 has_dest_reg &&
                 !LYRA_BA_GET_BIT(used_vars, insn->dest_var)) {
                 changed = 1;
+                LYRA_BA_SET_BIT(dead_vars, insn->dest_var);
                 struct lyra_insn *insn_next = insn->next;
                 lyra_block_remove_insn(block, insn);
                 insn = insn_next;
@@ -209,7 +211,11 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
             }
         }
     }
+    for(size_t i = 0; i < shared->variables_len; i++)
+        if (LYRA_BA_GET_BIT(dead_vars, i))
+            shared->variable_types[i] = LYRA_VALUE_UNTYPED;
     free(used_vars);
+    free(dead_vars);
     return 1;
 }
 

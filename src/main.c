@@ -46,8 +46,9 @@ int main() {
         lyra_block_add_insn(&block, insn);
     }
     {
-        block.connector.type = LYRA_BLOCK_RET;
+        block.connector.type = LYRA_BLOCK_JIF;
         block.connector.var = 0;
+        block.connector.label = 0;
     }
 
     lyra_block_print(&block);

@@ -22,7 +22,9 @@ struct lyra_block_connector {
     size_t label;
 };
 
-void lyra_block_connector_comp(struct lyra_block_connector *conn,
+struct lyra_function_shared;
+void lyra_block_connector_comp(const struct lyra_block_connector *conn,
+                               const struct lyra_function_shared *shared,
                                struct lyra_comp *c);
 
 struct lyra_block {

@@ -1,12 +1,23 @@
+#include "function.h"
 #include "block.h"
 #include "comp.h"
 
-void lyra_block_connector_comp(struct lyra_block_connector *conn,
+void lyra_block_connector_comp(const struct lyra_block_connector *conn,
+                               const struct lyra_function_shared *shared,
                                struct lyra_comp *c) {
     switch (conn->type) {
     case LYRA_BLOCK_RET: {
-        lyra_comp_print_str(c, "return v");
-        lyra_comp_print_isize(c, conn->var);
+        lyra_comp_print_str(c, "return ");
+        const char *convert_fn = lyra_value_type_to_any_fn(shared->variable_types[conn->var]);
+        if(convert_fn != 0) {
+            lyra_comp_print_str(c, convert_fn);
+            lyra_comp_print_str(c, "(v");
+            lyra_comp_print_isize(c, conn->var);
+            lyra_comp_print_str(c, ")");
+        } else {
+            lyra_comp_print_str(c, "v");
+            lyra_comp_print_isize(c, conn->var);
+        }
         break;
     }
     case LYRA_BLOCK_JMP: {
@@ -15,13 +26,15 @@ void lyra_block_connector_comp(struct lyra_block_connector *conn,
         break;
     }
     case LYRA_BLOCK_JIF: {
-        lyra_comp_print_str(c, "if(v");
+        assert(shared->variable_types[conn->var] == LYRA_VALUE_BOOL);
+        lyra_comp_print_str(c, "if (v");
         lyra_comp_print_isize(c, conn->var);
         lyra_comp_print_str(c, ") goto L");
         lyra_comp_print_isize(c, conn->label);
         break;
     }
     case LYRA_BLOCK_JNIF: {
+        assert(shared->variable_types[conn->var] == LYRA_VALUE_BOOL);
         lyra_comp_print_str(c, "if(!v");
         lyra_comp_print_isize(c, conn->var);
         lyra_comp_print_str(c, ") goto L");
