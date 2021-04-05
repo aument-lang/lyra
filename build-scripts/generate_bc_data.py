@@ -74,6 +74,14 @@ class Instruction:
             self.options["c_bin_func_imm"](compiler)
             compiler.raw(")")
             return compiler.end()
+        elif "c_bin_func" in self.options:
+            compiler.assign_dest_var()
+            compiler.raw(self.options["c_bin_func"] + "(")
+            compiler.left_var()
+            compiler.raw(",")
+            compiler.right_var()
+            compiler.raw(")")
+            return compiler.end()
         elif "c_codegen" in self.options:
             self.options["c_codegen"](compiler)
             return compiler.end()
@@ -102,14 +110,14 @@ Instruction("MOV_F64", ARG_TYPE_NONE, ARG_TYPE_F64, c_codegen=gen_mov_f64)
 
 def gen_ensure_i32(compiler):
     compiler.assign_dest_var()
-    compiler.raw("au_value_int(")
+    compiler.raw("au_value_get_int(")
     compiler.left_var()
     compiler.raw(")")
 Instruction("ENSURE_I32", ARG_TYPE_VAR, c_codegen=gen_ensure_i32)
 
 def gen_ensure_f64(compiler):
     compiler.assign_dest_var()
-    compiler.raw("au_value_float(")
+    compiler.raw("au_value_get_float(")
     compiler.left_var()
     compiler.raw(")")
 Instruction("ENSURE_F64", ARG_TYPE_VAR, c_codegen=gen_ensure_f64)
@@ -119,7 +127,7 @@ def gen_ensure_num(compiler):
     compiler.raw("au_num_from_value(")
     compiler.left_var()
     compiler.raw(")")
-Instruction("ENSURE_NUM", ARG_TYPE_VAR, c_codegen=gen_ensure_num)
+Instruction("ENSURE_NUM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_ensure_num)
 
 # Binary operations
 
@@ -159,6 +167,7 @@ for (op, c_bin_func, c_bin_op, num_func) in [
     Instruction(op + "_VAR", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=c_bin_func)
     Instruction(op + "_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_i32=c_bin_op)
     Instruction(op + "_F64_IMM", ARG_TYPE_VAR, ARG_TYPE_F64, c_bin_f64=c_bin_op)
+    Instruction(op + "_NUM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=num_func)
     Instruction(op + "_NUM_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_func=num_func, c_bin_func_imm=Compiler.right_i32)
     Instruction(op + "_NUM_F64_IMM", ARG_TYPE_VAR, ARG_TYPE_F64, c_bin_func=num_func, c_bin_func_imm=Compiler.right_f64)
 
