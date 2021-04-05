@@ -27,6 +27,10 @@ void lyra_block_connector_comp(const struct lyra_block_connector *conn,
         lyra_comp_print_str(c, ";");
         break;
     }
+    case LYRA_BLOCK_RET_NIL: {
+        lyra_comp_print_str(c, "return au_value_none();");
+        break;
+    }
     case LYRA_BLOCK_JMP: {
         lyra_comp_print_str(c, "goto L");
         lyra_comp_print_isize(c, conn->label);

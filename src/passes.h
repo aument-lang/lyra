@@ -24,6 +24,6 @@ int lyra_pass_type_inference(struct lyra_block *block,
                              struct lyra_function_shared *shared,
                              struct lyra_ctx *ctx);
 
-int lyra_pass_cast_to_specific_type(
-    struct lyra_block *block, struct lyra_function_shared *shared,
-    struct lyra_ctx *ctx);
+int lyra_pass_cast_to_specific_type(struct lyra_block *block,
+                                    struct lyra_function_shared *shared,
+                                    struct lyra_ctx *ctx);

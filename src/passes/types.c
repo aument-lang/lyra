@@ -126,9 +126,9 @@ static size_t generate_cast(struct lyra_insn *insn, size_t var,
     return new_var;
 }
 
-int lyra_pass_cast_to_specific_type(
-    struct lyra_block *block, struct lyra_function_shared *shared,
-    struct lyra_ctx *ctx) {
+int lyra_pass_cast_to_specific_type(struct lyra_block *block,
+                                    struct lyra_function_shared *shared,
+                                    struct lyra_ctx *ctx) {
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
         switch (insn->type) {

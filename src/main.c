@@ -22,37 +22,51 @@ int main() {
     lyra_function_add_variable(fn, LYRA_VALUE_UNTYPED);
     lyra_function_add_variable(fn, LYRA_VALUE_UNTYPED);
 
-    struct lyra_block block;
-    lyra_block_init(&block);
+    {
+        struct lyra_block block;
+        lyra_block_init(&block);
+
+        {
+            struct lyra_insn *insn =
+                lyra_insn_imm(LYRA_OP_LOAD_ARG, LYRA_INSN_I32(0), 0, &ctx);
+            lyra_block_add_insn(&block, insn);
+        }
+        {
+            struct lyra_insn *insn = lyra_insn_new(
+                LYRA_OP_ADD_NUM_I32_IMM, 0, LYRA_INSN_I32(0x10), 0, &ctx);
+            lyra_block_add_insn(&block, insn);
+        }
+        {
+            struct lyra_insn *insn =
+                lyra_insn_imm(LYRA_OP_LOAD_ARG, LYRA_INSN_I32(0), 1, &ctx);
+            lyra_block_add_insn(&block, insn);
+        }
+        {
+            struct lyra_insn *insn = lyra_insn_new(
+                LYRA_OP_LT_VAR, 0, LYRA_INSN_REG(1), 2, &ctx);
+            lyra_block_add_insn(&block, insn);
+        }
+        {
+            block.connector.type = LYRA_BLOCK_JIF;
+            block.connector.var = 2;
+            block.connector.label = 0;
+        }
+
+        lyra_block_print(&block);
+        lyra_function_add_block(fn, block);
+    }
 
     {
-        struct lyra_insn *insn =
-            lyra_insn_imm(LYRA_OP_LOAD_ARG, LYRA_INSN_I32(0), 0, &ctx);
-        lyra_block_add_insn(&block, insn);
-    }
-    {
-        struct lyra_insn *insn = lyra_insn_new(
-            LYRA_OP_ADD_NUM_I32_IMM, 0, LYRA_INSN_I32(0x10), 0, &ctx);
-        lyra_block_add_insn(&block, insn);
-    }
-    {
-        struct lyra_insn *insn =
-            lyra_insn_imm(LYRA_OP_LOAD_ARG, LYRA_INSN_I32(0), 1, &ctx);
-        lyra_block_add_insn(&block, insn);
-    }
-    {
-        struct lyra_insn *insn =
-            lyra_insn_new(LYRA_OP_LT_VAR, 0, LYRA_INSN_REG(1), 2, &ctx);
-        lyra_block_add_insn(&block, insn);
-    }
-    {
-        block.connector.type = LYRA_BLOCK_JIF;
-        block.connector.var = 2;
-        block.connector.label = 0;
+        struct lyra_block block;
+        lyra_block_init(&block);
+        {
+            block.connector.type = LYRA_BLOCK_RET_NIL;
+            block.connector.var = 0;
+            block.connector.label = 0;
+        }
+        lyra_function_add_block(fn, block);
     }
 
-    lyra_block_print(&block);
-    lyra_function_add_block(fn, block);
     lyra_function_finalize(fn);
 
     lyra_function_all_blocks(fn, lyra_pass_fill_inputs);
