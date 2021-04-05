@@ -6,6 +6,7 @@ LYRA_OP_MOV_BOOL,
 LYRA_OP_MOV_F64,
 LYRA_OP_ENSURE_I32,
 LYRA_OP_ENSURE_F64,
+LYRA_OP_ENSURE_NUM,
 LYRA_OP_MUL_VAR,
 LYRA_OP_MUL_I32_IMM,
 LYRA_OP_MUL_F64_IMM,
@@ -66,6 +67,7 @@ static inline int lyra_insn_type_has_left_var(enum lyra_insn_type type) {
 if(type == LYRA_OP_MOV_VAR) return 1;
 if(type == LYRA_OP_ENSURE_I32) return 1;
 if(type == LYRA_OP_ENSURE_F64) return 1;
+if(type == LYRA_OP_ENSURE_NUM) return 1;
 if(type == LYRA_OP_MUL_VAR) return 1;
 if(type == LYRA_OP_MUL_I32_IMM) return 1;
 if(type == LYRA_OP_MUL_F64_IMM) return 1;
@@ -140,6 +142,7 @@ if(type == LYRA_OP_MOV_BOOL) return 1;
 if(type == LYRA_OP_MOV_F64) return 1;
 if(type == LYRA_OP_ENSURE_I32) return 1;
 if(type == LYRA_OP_ENSURE_F64) return 1;
+if(type == LYRA_OP_ENSURE_NUM) return 1;
 if(type == LYRA_OP_MUL_VAR) return 1;
 if(type == LYRA_OP_MUL_I32_IMM) return 1;
 if(type == LYRA_OP_MUL_F64_IMM) return 1;
