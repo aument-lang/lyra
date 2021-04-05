@@ -8,7 +8,7 @@
 
 int lyra_pass_purge_dead_code(struct lyra_block *block,
                               struct lyra_function_shared *shared,
-                              struct lyra_ctx *ctx) {
+                              LYRA_UNUSED struct lyra_ctx *ctx) {
     lyra_bit_array used_vars = malloc(LYRA_BA_LEN(shared->variables_len));
     lyra_bit_array dead_vars =
         calloc(LYRA_BA_LEN(shared->variables_len), 1);

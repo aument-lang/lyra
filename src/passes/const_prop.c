@@ -5,10 +5,11 @@
 #include "bit_array.h"
 #include "block.h"
 #include "function.h"
+#include "platform.h"
 
 int lyra_pass_const_prop(struct lyra_block *block,
                          struct lyra_function_shared *shared,
-                         struct lyra_ctx *ctx) {
+                         LYRA_UNUSED struct lyra_ctx *ctx) {
     struct lyra_value *constants =
         malloc(sizeof(struct lyra_value) * shared->variables_len);
     for (size_t i = 0; i < shared->variables_len; i++)

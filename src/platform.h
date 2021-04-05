@@ -60,3 +60,5 @@
 #else
 #define LYRA_STATIC_ASSERT(cond, msg)
 #endif
+
+#define LYRA_FALLTHROUGH __attribute__((fallthrough))

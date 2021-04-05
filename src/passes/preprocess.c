@@ -5,10 +5,11 @@
 #include "bit_array.h"
 #include "block.h"
 #include "function.h"
+#include "platform.h"
 
 int lyra_pass_fill_inputs(struct lyra_block *block,
                           struct lyra_function_shared *shared,
-                          struct lyra_ctx *ctx) {
+                          LYRA_UNUSED struct lyra_ctx *ctx) {
     lyra_bit_array owned_vars =
         calloc(LYRA_BA_LEN(shared->managed_vars_len), 1);
     lyra_bit_array used_vars =
@@ -20,7 +21,7 @@ int lyra_pass_fill_inputs(struct lyra_block *block,
         case LYRA_OP_MOV_I32:
         case LYRA_OP_MOV_F64: {
             LYRA_BA_SET_BIT(owned_vars, insn->left_var);
-            // fallthrough
+            LYRA_FALLTHROUGH;
         }
         case LYRA_OP_MOV_VAR: {
             LYRA_BA_SET_BIT(owned_vars, insn->dest_var);

@@ -185,34 +185,45 @@ Instruction("LOAD_ARG", ARG_TYPE_NONE, ARG_TYPE_I32, c_codegen=gen_load_arg)
 
 with open("./src/bc_data/types.txt", "w") as insn_type_f:
 
-    insn_type_defs = "#pragma once\nenum lyra_insn_type {\n"
+    insn_type_defs = \
+        "#pragma once\n" \
+        '#include "platform.h"\n' \
+        "enum lyra_insn_type {\n"
     for insn in Instruction.instances:
         insn_type_defs += f"LYRA_OP_{insn.name},\n"
     insn_type_defs += "};\n"
     insn_type_f.write(insn_type_defs)
 
-    insn_type_defs = "static inline int lyra_insn_type_has_left_var(enum lyra_insn_type type) {\n"
+    insn_type_defs = \
+    "static LYRA_ALWAYS_INLINE LYRA_UNUSED " \
+    "int lyra_insn_type_has_left_var(enum lyra_insn_type type) {\n"
     for insn in Instruction.instances:
         if insn.left_type == ARG_TYPE_VAR:
             insn_type_defs += f"if(type == LYRA_OP_{insn.name}) return 1;\n"
     insn_type_defs += "return 0;}\n"
     insn_type_f.write(insn_type_defs)
 
-    insn_type_defs = "static inline int lyra_insn_type_has_right_var(enum lyra_insn_type type) {\n"
+    insn_type_defs = \
+    "static LYRA_ALWAYS_INLINE LYRA_UNUSED " \
+    "int lyra_insn_type_has_right_var(LYRA_UNUSED enum lyra_insn_type type) {\n"
     for insn in Instruction.instances:
         if insn.right_type == ARG_TYPE_VAR:
             insn_type_defs += f"if(type == LYRA_OP_{insn.name}) return 1;\n"
     insn_type_defs += "return 0;}\n"
     insn_type_f.write(insn_type_defs)
 
-    insn_type_defs = "static inline int lyra_insn_type_has_dest(enum lyra_insn_type type) {\n"
+    insn_type_defs = \
+    "static LYRA_ALWAYS_INLINE LYRA_UNUSED " \
+    "int lyra_insn_type_has_dest(LYRA_UNUSED enum lyra_insn_type type) {\n"
     for insn in Instruction.instances:
         if insn.has_dest:
             insn_type_defs += f"if(type == LYRA_OP_{insn.name}) return 1;\n"
     insn_type_defs += "return 0;}\n"
     insn_type_f.write(insn_type_defs)
 
-    insn_type_defs = "static inline int lyra_insn_type_has_side_effect(enum lyra_insn_type type) {\n"
+    insn_type_defs = \
+    "static LYRA_ALWAYS_INLINE LYRA_UNUSED " \
+    "int lyra_insn_type_has_side_effect(LYRA_UNUSED enum lyra_insn_type type) {\n"
     for insn in Instruction.instances:
         if "has_side_effect" in insn.options:
             insn_type_defs += f"if(type == LYRA_OP_{insn.name}) return 1;\n"

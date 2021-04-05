@@ -8,7 +8,7 @@
 
 int lyra_pass_type_inference(struct lyra_block *block,
                              struct lyra_function_shared *shared,
-                             struct lyra_ctx *ctx) {
+                             LYRA_UNUSED struct lyra_ctx *ctx) {
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
         switch (insn->type) {
@@ -21,11 +21,15 @@ int lyra_pass_type_inference(struct lyra_block *block,
     } while (0)
         // Operations that result in int/double
         case LYRA_OP_MOV_I32:
+            LYRA_FALLTHROUGH;
         case LYRA_OP_MUL_I32_IMM:
+            LYRA_FALLTHROUGH;
         case LYRA_OP_ADD_I32_IMM:
+            LYRA_FALLTHROUGH;
         case LYRA_OP_SUB_I32_IMM: {
             switch (shared->variable_types[insn->dest_var]) {
             case LYRA_VALUE_I32:
+                break;
             case LYRA_VALUE_NUM:
                 break;
             case LYRA_VALUE_UNTYPED: {
@@ -41,6 +45,7 @@ int lyra_pass_type_inference(struct lyra_block *block,
                 break;
             }
             }
+            break;
         }
         // Operations that only return an int
         case LYRA_OP_ENSURE_I32:

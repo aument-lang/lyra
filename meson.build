@@ -1,4 +1,11 @@
-project('lyra', 'c')
+project(
+    'lyra', 'c',
+    license: 'Apache-2.0',
+    default_options: [
+        'warning_level=2',
+        'werror=true',
+    ]
+)
 
 prog_python = import('python').find_installation('python3')
 
