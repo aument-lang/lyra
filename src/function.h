@@ -24,10 +24,11 @@ struct lyra_function {
     struct lyra_block_array blocks;
     struct lyra_function_shared shared;
     size_t name;
+    size_t num_args;
     struct lyra_ctx *ctx;
 };
 
-struct lyra_function *lyra_function_new(size_t name, struct lyra_ctx *ctx);
+struct lyra_function *lyra_function_new(size_t name, size_t num_args, struct lyra_ctx *ctx);
 
 size_t lyra_function_add_block(struct lyra_function *fn,
                                struct lyra_block block);
