@@ -184,11 +184,11 @@ int lyra_pass_const_prop(struct lyra_block *block,
             insn->right_operand = LYRA_INSN_I32(result.data.i32);         \
         } /* Left is undetermined, right side is constant */              \
         else if (right_type == LYRA_VALUE_I32) {                          \
-            insn->type = LYRA_OP_BASE##_I32_IMM;                          \
+            insn->type = LYRA_OP_BASE##_NUM_I32_IMM;                          \
             insn->right_operand = LYRA_INSN_I32(                          \
                 constants[insn->right_operand.var].data.i32);             \
         } else if (right_type == LYRA_VALUE_F64) {                        \
-            insn->type = LYRA_OP_BASE##_F64_IMM;                          \
+            insn->type = LYRA_OP_BASE##_NUM_F64_IMM;                          \
             insn->right_operand = LYRA_INSN_F64(                          \
                 constants[insn->right_operand.var].data.f64);             \
         }                                                                 \
@@ -317,14 +317,24 @@ int lyra_pass_type_inference(struct lyra_block *block,
             SET_TYPE(insn->dest_var, LYRA_VALUE_I32);
             break;
         }
+        case LYRA_OP_MUL_NUM_I32_IMM:
+        case LYRA_OP_ADD_NUM_I32_IMM:
+        case LYRA_OP_SUB_NUM_I32_IMM: {
+            SET_TYPE(insn->dest_var, LYRA_VALUE_NUM);
+            break;
+        }
         case LYRA_OP_MOV_F64:
         case LYRA_OP_ENSURE_F64:
         case LYRA_OP_MUL_F64_IMM:
         case LYRA_OP_DIV_F64_IMM:
         case LYRA_OP_ADD_F64_IMM:
-        case LYRA_OP_SUB_F64_IMM:
-        case LYRA_OP_MOD_F64_IMM: {
+        case LYRA_OP_SUB_F64_IMM: {
             SET_TYPE(insn->dest_var, LYRA_VALUE_F64);
+            break;
+        }
+        case LYRA_OP_ADD_NUM_F64_IMM:
+        case LYRA_OP_SUB_NUM_F64_IMM: {
+            SET_TYPE(insn->dest_var, LYRA_VALUE_NUM);
             break;
         }
         case LYRA_OP_LT_VAR:

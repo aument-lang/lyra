@@ -8,6 +8,7 @@ enum lyra_value_type {
     LYRA_VALUE_I32,
     LYRA_VALUE_F64,
     LYRA_VALUE_BOOL,
+    LYRA_VALUE_NUM,
 };
 
 struct lyra_value {
@@ -27,6 +28,8 @@ static inline const char *lyra_value_type_c(enum lyra_value_type type) {
         return "int32_t";
     case LYRA_VALUE_F64:
         return "double";
+    case LYRA_VALUE_NUM:
+        return "au_num_t";
     default:
         return 0;
     }
@@ -44,6 +47,8 @@ lyra_value_type_to_any_fn(enum lyra_value_type type) {
         return "au_value_bool";
     case LYRA_VALUE_F64:
         return "au_value_double";
+    case LYRA_VALUE_NUM:
+        return "au_num_to_value";
     }
     return 0;
 }

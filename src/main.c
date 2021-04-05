@@ -32,7 +32,7 @@ int main() {
     }
     {
         struct lyra_insn *insn = lyra_insn_new(
-            LYRA_OP_ADD_I32_IMM, 0, LYRA_INSN_I32(0x10), 0, &ctx);
+            LYRA_OP_ADD_NUM_I32_IMM, 0, LYRA_INSN_I32(0x10), 0, &ctx);
         lyra_block_add_insn(&block, insn);
     }
     {
