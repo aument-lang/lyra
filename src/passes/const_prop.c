@@ -42,12 +42,14 @@ int lyra_pass_const_prop(struct lyra_block *block,
 
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
+        if (!lyra_insn_type_has_dest(insn))
+            continue;
+        if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
+                            insn->dest_var))
+            continue;
         switch (insn->type) {
         // mov immediate instructions
         case LYRA_OP_MOV_I32: {
-            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                                insn->dest_var))
-                continue;
             constants[insn->dest_var] = (struct lyra_value){
                 .data.i32 = insn->right_operand.i32,
                 .type = LYRA_VALUE_I32,
@@ -55,9 +57,6 @@ int lyra_pass_const_prop(struct lyra_block *block,
             break;
         }
         case LYRA_OP_MOV_BOOL: {
-            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                                insn->dest_var))
-                continue;
             constants[insn->dest_var] = (struct lyra_value){
                 .data.i32 = insn->right_operand.i32,
                 .type = LYRA_VALUE_BOOL,
@@ -161,12 +160,11 @@ int lyra_pass_const_prop(struct lyra_block *block,
         // Comparison
 #define COMP_OP(LYRA_OP_BASE, C_OP)                                       \
     {                                                                     \
-        const enum lyra_value_type ltype =                            \
+        const enum lyra_value_type ltype =                                \
             constants[insn->left_var].type;                               \
-        const enum lyra_value_type rtype =                           \
+        const enum lyra_value_type rtype =                                \
             constants[insn->right_operand.var].type;                      \
-        if (ltype == LYRA_VALUE_I32 &&                                \
-            rtype == LYRA_VALUE_I32) {                               \
+        if (ltype == LYRA_VALUE_I32 && rtype == LYRA_VALUE_I32) {         \
             struct lyra_value result = (struct lyra_value){               \
                 .data.i32 =                                               \
                     constants[insn->left_var]                             \
@@ -179,8 +177,7 @@ int lyra_pass_const_prop(struct lyra_block *block,
             insn->type = LYRA_OP_MOV_BOOL;                                \
             insn->left_var = 0;                                           \
             insn->right_operand = LYRA_INSN_I32(result.data.i32);         \
-        } else if (ltype == LYRA_VALUE_F64 &&                         \
-                   rtype == LYRA_VALUE_F64) {                        \
+        } else if (ltype == LYRA_VALUE_F64 && rtype == LYRA_VALUE_F64) {  \
             struct lyra_value result = (struct lyra_value){               \
                 .data.i32 =                                               \
                     constants[insn->left_var]                             \

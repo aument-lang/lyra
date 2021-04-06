@@ -49,13 +49,7 @@ int lyra_pass_type_inference(struct lyra_block *block,
         switch (insn->type) {
         // Operations that only return an int
         case LYRA_OP_MOV_I32:
-        case LYRA_OP_ENSURE_I32:
-        case LYRA_OP_MOD_I32:
-        case LYRA_OP_BOR_I32:
-        case LYRA_OP_BXOR_I32:
-        case LYRA_OP_BAND_I32:
-        case LYRA_OP_BSHL_I32:
-        case LYRA_OP_BSHR_I32: {
+        case LYRA_OP_ENSURE_I32: {
             SET_TYPE(insn->dest_var, LYRA_VALUE_I32);
             break;
         }
@@ -140,6 +134,51 @@ int lyra_pass_type_inference(struct lyra_block *block,
                 default:
                     abort();
                 }
+            }
+            break;
+        }
+        // Integer-only binary operations
+        case LYRA_OP_BOR_I32:
+            LYRA_FALLTHROUGH;
+        case LYRA_OP_BXOR_I32:
+            LYRA_FALLTHROUGH;
+        case LYRA_OP_BAND_I32:
+            LYRA_FALLTHROUGH;
+        case LYRA_OP_BSHL_I32:
+            LYRA_FALLTHROUGH;
+        case LYRA_OP_BSHR_I32:
+            LYRA_FALLTHROUGH;
+        case LYRA_OP_MOD_I32: {
+            enum lyra_value_type ltype =
+                shared->variable_types[insn->left_var];
+            if (ltype == LYRA_VALUE_ANY) {
+                insn->left_var =
+                    generate_cast(insn, insn->left_var, LYRA_VALUE_I32,
+                                  LYRA_OP_ENSURE_I32, block, shared, ctx);
+                ltype = LYRA_VALUE_I32;
+            } else if (ltype == LYRA_VALUE_NUM) {
+                insn->left_var = generate_cast(
+                    insn, insn->left_var, LYRA_VALUE_I32,
+                    LYRA_OP_ENSURE_I32_NUM, block, shared, ctx);
+                ltype = LYRA_VALUE_I32;
+            }
+
+            enum lyra_value_type rtype =
+                shared->variable_types[insn->right_operand.var];
+            if (rtype == LYRA_VALUE_ANY) {
+                insn->right_operand.var = generate_cast(
+                    insn, insn->right_operand.var, LYRA_VALUE_I32,
+                    LYRA_OP_ENSURE_I32, block, shared, ctx);
+                rtype = LYRA_VALUE_I32;
+            } else if (rtype == LYRA_VALUE_NUM) {
+                insn->right_operand.var = generate_cast(
+                    insn, insn->right_operand.var, LYRA_VALUE_I32,
+                    LYRA_OP_ENSURE_I32_NUM, block, shared, ctx);
+                rtype = LYRA_VALUE_I32;
+            }
+
+            if (!IS_I32(ltype) || !IS_I32(rtype)) {
+                abort(); // TODO
             }
             break;
         }

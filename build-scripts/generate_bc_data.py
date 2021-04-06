@@ -142,6 +142,20 @@ def gen_ensure_num(compiler):
     compiler.raw(")")
 Instruction("ENSURE_NUM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_ensure_num)
 
+def gen_ensure_i32_num(compiler):
+    compiler.assign_dest_var()
+    compiler.raw("au_num_into_i32(")
+    compiler.left_var()
+    compiler.raw(")")
+Instruction("ENSURE_I32_NUM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_ensure_i32_num)
+
+def gen_ensure_f64_num(compiler):
+    compiler.assign_dest_var()
+    compiler.raw("au_num_into_f64(")
+    compiler.left_var()
+    compiler.raw(")")
+Instruction("ENSURE_F64_NUM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_ensure_f64_num)
+
 # Binary operations
 
 for (op, c_bin_func, c_bin_op, num_func) in [
