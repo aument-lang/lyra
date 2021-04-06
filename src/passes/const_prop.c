@@ -7,6 +7,26 @@
 #include "function.h"
 #include "platform.h"
 
+static struct lyra_value generate_const_i32_insn(struct lyra_insn *insn,
+                                                 int32_t value) {
+    insn->type = LYRA_OP_MOV_I32;
+    insn->right_operand.i32 = value;
+    return (struct lyra_value){
+        .type = LYRA_VALUE_I32,
+        .data.i32 = value,
+    };
+}
+
+static struct lyra_value generate_const_f64_insn(struct lyra_insn *insn,
+                                                 double value) {
+    insn->type = LYRA_OP_MOV_F64;
+    insn->right_operand.f64 = value;
+    return (struct lyra_value){
+        .type = LYRA_VALUE_F64,
+        .data.f64 = value,
+    };
+}
+
 int lyra_pass_const_prop(struct lyra_block *block,
                          struct lyra_function_shared *shared,
                          LYRA_UNUSED struct lyra_ctx *ctx) {
@@ -40,21 +60,35 @@ int lyra_pass_const_prop(struct lyra_block *block,
             break;
         }
         // Arithmetic
-        case LYRA_OP_ADD_I32_IMM: {
-            if (constants[insn->left_var].type == LYRA_VALUE_UNTYPED)
-                continue;
-            assert(constants[insn->left_var].type == LYRA_VALUE_I32);
-            struct lyra_value result = (struct lyra_value){
-                .data.i32 = constants[insn->left_var].data.i32 +
-                            (int32_t)insn->right_operand.i32,
-                .type = LYRA_VALUE_I32,
-            };
-            constants[insn->dest_var] = result;
-            shared->variable_types[insn->dest_var] = LYRA_VALUE_I32;
-            insn->type = LYRA_OP_MOV_I32;
-            insn->left_var = 0;
-            insn->right_operand = LYRA_INSN_I32(result.data.i32);
-            continue;
+        case LYRA_OP_ADD_PRIM: {
+            const struct lyra_value lhs = constants[insn->left_var];
+            const struct lyra_value rhs =
+                constants[insn->right_operand.var];
+            switch (lhs.type) {
+            case LYRA_VALUE_I32: {
+                if (rhs.type == LYRA_VALUE_I32) {
+                    constants[insn->dest_var] = generate_const_i32_insn(
+                        insn, lhs.data.i32 + rhs.data.i32);
+                } else if (rhs.type == LYRA_VALUE_F64) {
+                    constants[insn->dest_var] = generate_const_f64_insn(
+                        insn, (double)lhs.data.i32 + rhs.data.f64);
+                }
+                break;
+            }
+            case LYRA_VALUE_F64: {
+                if (rhs.type == LYRA_VALUE_I32) {
+                    constants[insn->dest_var] = generate_const_f64_insn(
+                        insn, lhs.data.f64 + (double)rhs.data.i32);
+                } else if (rhs.type == LYRA_VALUE_F64) {
+                    constants[insn->dest_var] = generate_const_f64_insn(
+                        insn, lhs.data.f64 + rhs.data.f64);
+                }
+                break;
+            }
+            default:
+                break;
+            }
+            break;
         }
         // Comparison
 #define COMP_OP(LYRA_OP_BASE, C_OP)                                       \
@@ -91,15 +125,6 @@ int lyra_pass_const_prop(struct lyra_block *block,
             insn->type = LYRA_OP_MOV_BOOL;                                \
             insn->left_var = 0;                                           \
             insn->right_operand = LYRA_INSN_I32(result.data.i32);         \
-        } /* Left is undetermined, right side is constant */              \
-        else if (right_type == LYRA_VALUE_I32) {                          \
-            insn->type = LYRA_OP_BASE##_NUM_I32_IMM;                      \
-            insn->right_operand = LYRA_INSN_I32(                          \
-                constants[insn->right_operand.var].data.i32);             \
-        } else if (right_type == LYRA_VALUE_F64) {                        \
-            insn->type = LYRA_OP_BASE##_NUM_F64_IMM;                      \
-            insn->right_operand = LYRA_INSN_F64(                          \
-                constants[insn->right_operand.var].data.f64);             \
         }                                                                 \
         continue;                                                         \
     }

@@ -48,7 +48,13 @@ class Instruction:
 
     def gen_compiler(self):
         compiler = Compiler()
-        if "c_bin_i32" in self.options:
+        if "c_bin_op" in self.options:
+            compiler.assign_dest_var()
+            compiler.left_var()
+            compiler.raw(self.options["c_bin_op"])
+            compiler.right_var()
+            return compiler.end()
+        elif "c_bin_i32" in self.options:
             compiler.assign_dest_var()
             compiler.left_var()
             compiler.raw(self.options["c_bin_i32"])
@@ -122,6 +128,13 @@ def gen_ensure_f64(compiler):
     compiler.raw(")")
 Instruction("ENSURE_F64", ARG_TYPE_VAR, c_codegen=gen_ensure_f64)
 
+def gen_ensure_f64_prim(compiler):
+    compiler.assign_dest_var()
+    compiler.raw("(double)(")
+    compiler.left_var()
+    compiler.raw(")")
+Instruction("ENSURE_F64_PRIM", ARG_TYPE_VAR, c_codegen=gen_ensure_f64_prim)
+
 def gen_ensure_num(compiler):
     compiler.assign_dest_var()
     compiler.raw("au_num_from_value(")
@@ -138,11 +151,10 @@ for (op, c_bin_func, c_bin_op, num_func) in [
     ("SUB", "au_value_sub", "-", "au_num_sub"),
 ]:
     Instruction(op + "_VAR", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=c_bin_func)
-    Instruction(op + "_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_i32=c_bin_op)
-    Instruction(op + "_F64_IMM", ARG_TYPE_VAR, ARG_TYPE_F64, c_bin_f64=c_bin_op)
+    Instruction(op + "_PRIM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_op=c_bin_op)
     if num_func:
-        Instruction(op + "_NUM_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_func=num_func, c_bin_func_imm=Compiler.right_i32)
-        Instruction(op + "_NUM_F64_IMM", ARG_TYPE_VAR, ARG_TYPE_F64, c_bin_func=num_func, c_bin_func_imm=Compiler.right_f64)
+        Instruction(op + "_NUM_I32", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=num_func + "_i32")
+        Instruction(op + "_NUM_F64", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=num_func + "_f64")
 
 for (op, c_bin_op) in [
     ("BOR", "|"),
@@ -152,7 +164,7 @@ for (op, c_bin_op) in [
     ("BSHR", ">>"),
     ("MOD", "%"),
 ]:
-    Instruction(op + "_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_i32=c_bin_op)
+    Instruction(op + "_I32", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_op=c_bin_op)
 
 # Comparison operations
 
@@ -165,12 +177,8 @@ for (op, c_bin_func, c_bin_op, num_func) in [
     ("GEQ", "au_value_geq", ">=", "au_num_geq"),
 ]:
     Instruction(op + "_VAR", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=c_bin_func)
-    Instruction(op + "_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_i32=c_bin_op)
-    Instruction(op + "_F64_IMM", ARG_TYPE_VAR, ARG_TYPE_F64, c_bin_f64=c_bin_op)
+    Instruction(op + "_PRIM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_op=c_bin_op)
     Instruction(op + "_NUM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=num_func)
-    Instruction(op + "_NUM_I32_IMM", ARG_TYPE_VAR, ARG_TYPE_I32, c_bin_func=num_func, c_bin_func_imm=Compiler.right_i32)
-    Instruction(op + "_NUM_F64_IMM", ARG_TYPE_VAR, ARG_TYPE_F64, c_bin_func=num_func, c_bin_func_imm=Compiler.right_f64)
-
 
 # Call instructions
 

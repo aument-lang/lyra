@@ -43,6 +43,14 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
+if(insn->type == LYRA_OP_ENSURE_F64_PRIM) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_str(c,"(double)(");
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
+lyra_comp_print_str(c,")");
+lyra_comp_print_str(c,";");
+return;
+}
 if(insn->type == LYRA_OP_ENSURE_NUM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"au_num_from_value(");
@@ -61,38 +69,30 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_MUL_I32_IMM) {
+if(insn->type == LYRA_OP_MUL_PRIM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"*");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_MUL_F64_IMM) {
+if(insn->type == LYRA_OP_MUL_NUM_I32) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"*");
-lyra_comp_print_f64(c,insn->right_operand.f64);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_MUL_NUM_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_mul(");
+lyra_comp_print_str(c,"au_num_mul_i32(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_MUL_NUM_F64_IMM) {
+if(insn->type == LYRA_OP_MUL_NUM_F64) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_mul(");
+lyra_comp_print_str(c,"au_num_mul_f64(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
-lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
@@ -107,19 +107,11 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_DIV_I32_IMM) {
+if(insn->type == LYRA_OP_DIV_PRIM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"/");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_DIV_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"/");
-lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
@@ -133,38 +125,30 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_ADD_I32_IMM) {
+if(insn->type == LYRA_OP_ADD_PRIM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"+");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_ADD_F64_IMM) {
+if(insn->type == LYRA_OP_ADD_NUM_I32) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"+");
-lyra_comp_print_f64(c,insn->right_operand.f64);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_ADD_NUM_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_add(");
+lyra_comp_print_str(c,"au_num_add_i32(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_ADD_NUM_F64_IMM) {
+if(insn->type == LYRA_OP_ADD_NUM_F64) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_add(");
+lyra_comp_print_str(c,"au_num_add_f64(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
-lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
@@ -179,87 +163,79 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_SUB_I32_IMM) {
+if(insn->type == LYRA_OP_SUB_PRIM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"-");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_SUB_F64_IMM) {
+if(insn->type == LYRA_OP_SUB_NUM_I32) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"-");
-lyra_comp_print_f64(c,insn->right_operand.f64);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_SUB_NUM_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_sub(");
+lyra_comp_print_str(c,"au_num_sub_i32(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_SUB_NUM_F64_IMM) {
+if(insn->type == LYRA_OP_SUB_NUM_F64) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_sub(");
+lyra_comp_print_str(c,"au_num_sub_f64(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
-lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_BOR_I32_IMM) {
+if(insn->type == LYRA_OP_BOR_I32) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"|");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_BXOR_I32_IMM) {
+if(insn->type == LYRA_OP_BXOR_I32) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"^");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_BAND_I32_IMM) {
+if(insn->type == LYRA_OP_BAND_I32) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"&");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_BSHL_I32_IMM) {
+if(insn->type == LYRA_OP_BSHL_I32) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"<<");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_BSHR_I32_IMM) {
+if(insn->type == LYRA_OP_BSHR_I32) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,">>");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_MOD_I32_IMM) {
+if(insn->type == LYRA_OP_MOD_I32) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"%");
-lyra_comp_print_i32(c,insn->right_operand.i32);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
@@ -273,19 +249,11 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_EQ_I32_IMM) {
+if(insn->type == LYRA_OP_EQ_PRIM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"==");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_EQ_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"==");
-lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
@@ -295,26 +263,6 @@ lyra_comp_print_str(c,"au_num_eq(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_EQ_NUM_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_eq(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_EQ_NUM_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_eq(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_f64(c,insn->right_operand.f64);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
@@ -329,19 +277,11 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_NEQ_I32_IMM) {
+if(insn->type == LYRA_OP_NEQ_PRIM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"!=");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_NEQ_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"!=");
-lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
@@ -351,26 +291,6 @@ lyra_comp_print_str(c,"au_num_neq(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_NEQ_NUM_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_neq(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_NEQ_NUM_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_neq(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_f64(c,insn->right_operand.f64);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
@@ -385,19 +305,11 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_LT_I32_IMM) {
+if(insn->type == LYRA_OP_LT_PRIM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"<");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_LT_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"<");
-lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
@@ -407,26 +319,6 @@ lyra_comp_print_str(c,"au_num_lt(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_LT_NUM_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_lt(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_LT_NUM_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_lt(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_f64(c,insn->right_operand.f64);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
@@ -441,19 +333,11 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_GT_I32_IMM) {
+if(insn->type == LYRA_OP_GT_PRIM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,">");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_GT_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,">");
-lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
@@ -463,26 +347,6 @@ lyra_comp_print_str(c,"au_num_gt(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_GT_NUM_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_gt(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_GT_NUM_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_gt(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_f64(c,insn->right_operand.f64);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
@@ -497,19 +361,11 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_LEQ_I32_IMM) {
+if(insn->type == LYRA_OP_LEQ_PRIM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,"<=");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_LEQ_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,"<=");
-lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
@@ -519,26 +375,6 @@ lyra_comp_print_str(c,"au_num_leq(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_LEQ_NUM_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_leq(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_LEQ_NUM_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_leq(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_f64(c,insn->right_operand.f64);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
@@ -553,19 +389,11 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_GEQ_I32_IMM) {
+if(insn->type == LYRA_OP_GEQ_PRIM) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,">=");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_GEQ_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,">=");
-lyra_comp_print_f64(c,insn->right_operand.f64);
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
 lyra_comp_print_str(c,";");
 return;
 }
@@ -575,26 +403,6 @@ lyra_comp_print_str(c,"au_num_geq(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_GEQ_NUM_I32_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_geq(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_i32(c,insn->right_operand.i32);
-lyra_comp_print_str(c,")");
-lyra_comp_print_str(c,";");
-return;
-}
-if(insn->type == LYRA_OP_GEQ_NUM_F64_IMM) {
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_num_geq(");
-lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
-lyra_comp_print_str(c,",");
-lyra_comp_print_f64(c,insn->right_operand.f64);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;

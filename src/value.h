@@ -11,13 +11,27 @@ enum lyra_value_type {
     LYRA_VALUE_NUM,
 };
 
-struct lyra_value {
-    union {
-        int32_t i32;
-        double f64;
-    } data;
-    enum lyra_value_type type;
-};
+static inline int lyra_value_type_is_primitive(enum lyra_value_type type) {
+    switch (type) {
+    case LYRA_VALUE_I32:
+    case LYRA_VALUE_F64:
+    case LYRA_VALUE_BOOL:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+static inline int
+lyra_value_type_is_primitive_num(enum lyra_value_type type) {
+    switch (type) {
+    case LYRA_VALUE_I32:
+    case LYRA_VALUE_F64:
+        return 1;
+    default:
+        return 0;
+    }
+}
 
 static inline const char *lyra_value_type_c(enum lyra_value_type type) {
     switch (type) {
@@ -52,3 +66,11 @@ lyra_value_type_to_any_fn(enum lyra_value_type type) {
     }
     return 0;
 }
+
+struct lyra_value {
+    union {
+        int32_t i32;
+        double f64;
+    } data;
+    enum lyra_value_type type;
+};
