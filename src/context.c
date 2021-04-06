@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -36,6 +37,8 @@
 // The views and conclusions contained in the software and documentation
 // are those of the authors and should not be interpreted as representing
 // official policies, either expressed or implied, of the FreeBSD Project.
+
+enum { TGC_MARK = 0x01, TGC_ROOT = 0x02, TGC_LEAF = 0x04 };
 
 static size_t hash(void *ptr) { return ((uintptr_t)ptr) >> 3; }
 
@@ -263,6 +266,7 @@ void lyra_ctx_init(struct lyra_ctx *ctx) {
     memset(ctx, 0, sizeof(struct lyra_ctx));
     lyra_ctx_ptr_set_init(&ctx->manual);
     lyra_ctx_ptr_set_init(&ctx->gc);
+    ctx->gc_paused = 1;
 }
 
 void lyra_ctx_del(struct lyra_ctx *ctx) {
@@ -279,12 +283,16 @@ void lyra_ctx_del(struct lyra_ctx *ctx) {
 
 void *lyra_ctx_mem_malloc(struct lyra_ctx *ctx, size_t size) {
     void *ptr = malloc(size);
+    if (ptr == 0)
+        return 0;
     return lyra_ctx_ptr_set_add(&ctx->manual, ptr, size, 0, 0);
 }
 
 void *lyra_ctx_mem_calloc(struct lyra_ctx *ctx, size_t nmemb,
                           size_t size) {
     void *ptr = calloc(nmemb, size);
+    if (ptr == 0)
+        return 0;
     return lyra_ctx_ptr_set_add(&ctx->manual, ptr, size, 0, 0);
 }
 
@@ -294,6 +302,209 @@ void *lyra_ctx_mem_realloc(struct lyra_ctx *ctx, void *ptr, size_t size) {
     if (new_ptr != old_ptr) {
         lyra_ctx_ptr_set_remove(&ctx->manual, old_ptr);
         return lyra_ctx_ptr_set_add(&ctx->manual, new_ptr, size, 0, 0);
+    }
+    return new_ptr;
+}
+
+static void gc_mark_ptr(struct lyra_ctx_ptr_set *gc, void *ptr) {
+
+    size_t i, j, h, k;
+
+    if ((uintptr_t)ptr < gc->minptr || (uintptr_t)ptr > gc->maxptr) {
+        return;
+    }
+
+    i = hash(ptr) % gc->nslots;
+    j = 0;
+
+    while (1) {
+        h = gc->items[i].hash;
+        if (h == 0 || j > lyra_ctx_ptr_set_probe(gc, i, h)) {
+            return;
+        }
+        if (ptr == gc->items[i].ptr) {
+            if (gc->items[i].flags & TGC_MARK) {
+                return;
+            }
+            gc->items[i].flags |= TGC_MARK;
+            if (gc->items[i].flags & TGC_LEAF) {
+                return;
+            }
+            for (k = 0; k < gc->items[i].size / sizeof(void *); k++) {
+                gc_mark_ptr(gc, ((void **)gc->items[i].ptr)[k]);
+            }
+            return;
+        }
+        i = (i + 1) % gc->nslots;
+        j++;
+    }
+}
+
+static void gc_mark(struct lyra_ctx_ptr_set *gc) {
+    size_t i, k;
+
+    if (gc->nitems == 0) {
+        return;
+    }
+
+    for (i = 0; i < gc->nslots; i++) {
+        if (gc->items[i].hash == 0) {
+            continue;
+        }
+        if (gc->items[i].flags & TGC_MARK) {
+            continue;
+        }
+        if (gc->items[i].flags & TGC_ROOT) {
+            gc->items[i].flags |= TGC_MARK;
+            if (gc->items[i].flags & TGC_LEAF) {
+                continue;
+            }
+            for (k = 0; k < gc->items[i].size / sizeof(void *); k++) {
+                gc_mark_ptr(gc, ((void **)gc->items[i].ptr)[k]);
+            }
+            continue;
+        }
+    }
+}
+
+static void gc_sweep(struct lyra_ctx_ptr_set *gc) {
+    size_t i, j, k, nj, nh;
+
+    if (gc->nitems == 0) {
+        return;
+    }
+
+    gc->nfrees = 0;
+    for (i = 0; i < gc->nslots; i++) {
+        if (gc->items[i].hash == 0) {
+            continue;
+        }
+        if (gc->items[i].flags & TGC_MARK) {
+            continue;
+        }
+        if (gc->items[i].flags & TGC_ROOT) {
+            continue;
+        }
+        gc->nfrees++;
+    }
+
+    gc->frees =
+        realloc(gc->frees, sizeof(struct lyra_ctx_ptr) * gc->nfrees);
+    if (gc->frees == NULL) {
+        return;
+    }
+
+    i = 0;
+    k = 0;
+    while (i < gc->nslots) {
+        if (gc->items[i].hash == 0) {
+            i++;
+            continue;
+        }
+        if (gc->items[i].flags & TGC_MARK) {
+            i++;
+            continue;
+        }
+        if (gc->items[i].flags & TGC_ROOT) {
+            i++;
+            continue;
+        }
+
+        gc->frees[k] = gc->items[i];
+        k++;
+        memset(&gc->items[i], 0, sizeof(struct lyra_ctx_ptr));
+
+        j = i;
+        while (1) {
+            nj = (j + 1) % gc->nslots;
+            nh = gc->items[nj].hash;
+            if (nh != 0 && lyra_ctx_ptr_set_probe(gc, nj, nh) > 0) {
+                memcpy(&gc->items[j], &gc->items[nj],
+                       sizeof(struct lyra_ctx_ptr));
+                memset(&gc->items[nj], 0, sizeof(struct lyra_ctx_ptr));
+                j = nj;
+            } else {
+                break;
+            }
+        }
+        gc->nitems--;
+    }
+
+    for (i = 0; i < gc->nslots; i++) {
+        if (gc->items[i].hash == 0) {
+            continue;
+        }
+        if (gc->items[i].flags & TGC_MARK) {
+            gc->items[i].flags &= ~TGC_MARK;
+        }
+    }
+
+    lyra_ctx_ptr_set_resize_less(gc);
+
+    gc->mitems = gc->nitems + (size_t)(gc->nitems * gc->sweepfactor) + 1;
+
+    for (i = 0; i < gc->nfrees; i++) {
+        if (gc->frees[i].ptr) {
+            fprintf(stderr, "free %p", gc->frees[i].ptr);
+            free(gc->frees[i].ptr);
+        }
+    }
+
+    free(gc->frees);
+    gc->frees = NULL;
+    gc->nfrees = 0;
+}
+
+void lyra_ctx_gc_run(struct lyra_ctx *ctx) {
+    if (!ctx->gc_paused) {
+        gc_mark(&ctx->gc);
+        gc_sweep(&ctx->gc);
+    }
+}
+
+void *lyra_ctx_gc_alloc(struct lyra_ctx *ctx, size_t size) {
+    void *ptr = malloc(size);
+    if (ptr == 0)
+        return 0;
+    int do_gc = 0;
+    ptr = lyra_ctx_ptr_set_add(&ctx->gc, ptr, size, 0, &do_gc);
+    if (do_gc)
+        lyra_ctx_gc_run(ctx);
+    return ptr;
+}
+
+void *lyra_ctx_gc_alloc_root(struct lyra_ctx *ctx, size_t size) {
+    void *ptr = malloc(size);
+    if (ptr == 0)
+        return 0;
+    int do_gc = 0;
+    ptr = lyra_ctx_ptr_set_add(&ctx->gc, ptr, size, TGC_ROOT, &do_gc);
+    if (do_gc)
+        lyra_ctx_gc_run(ctx);
+    return ptr;
+}
+
+void *lyra_ctx_gc_calloc(struct lyra_ctx *ctx, size_t nmemb, size_t size) {
+    void *ptr = calloc(nmemb, size);
+    if (ptr == 0)
+        return 0;
+    int do_gc = 0;
+    ptr = lyra_ctx_ptr_set_add(&ctx->gc, ptr, size, 0, &do_gc);
+    if (do_gc)
+        lyra_ctx_gc_run(ctx);
+    return ptr;
+}
+
+void *lyra_ctx_gc_realloc(struct lyra_ctx *ctx, void *ptr, size_t size) {
+    void *old_ptr = ptr;
+    void *new_ptr = realloc(ptr, size);
+    if (new_ptr != old_ptr) {
+        lyra_ctx_ptr_set_remove(&ctx->gc, old_ptr);
+        int do_gc = 0;
+        ptr = lyra_ctx_ptr_set_add(&ctx->gc, new_ptr, size, 0, &do_gc);
+        if (do_gc)
+            lyra_ctx_gc_run(ctx);
+        return ptr;
     }
     return new_ptr;
 }
