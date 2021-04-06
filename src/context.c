@@ -306,6 +306,11 @@ void *lyra_ctx_mem_realloc(struct lyra_ctx *ctx, void *ptr, size_t size) {
     return new_ptr;
 }
 
+void lyra_ctx_mem_free(struct lyra_ctx *ctx, void *ptr) {
+    lyra_ctx_ptr_set_remove(&ctx->manual, ptr);
+    free(ptr);
+}
+
 static void gc_mark_ptr(struct lyra_ctx_ptr_set *gc, void *ptr) {
 
     size_t i, j, h, k;
