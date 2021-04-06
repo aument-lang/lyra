@@ -7,7 +7,7 @@
 import glob
 import os
 all_files = []
-for root, _, files in os.walk("src/"):
+for root, _, files in os.walk("lyra/"):
     for file in files:
         if file.endswith(".h") or file.endswith(".c"):
             path = os.path.join(root, file)
