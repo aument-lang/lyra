@@ -7,9 +7,9 @@
 #include "function.h"
 #include "platform.h"
 
-int lyra_pass_fill_inputs(struct lyra_block *block,
-                          struct lyra_function_shared *shared,
-                          LYRA_UNUSED struct lyra_ctx *ctx) {
+int lyra_pass_check_multiple_use(struct lyra_block *block,
+                                 struct lyra_function_shared *shared,
+                                 LYRA_UNUSED struct lyra_ctx *ctx) {
     lyra_bit_array owned_vars =
         calloc(LYRA_BA_LEN(shared->managed_vars_len), 1);
     lyra_bit_array used_vars =

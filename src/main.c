@@ -58,7 +58,7 @@ int main() {
 
     lyra_function_finalize(fn);
 
-    lyra_function_all_blocks(fn, lyra_pass_fill_inputs);
+    lyra_function_all_blocks(fn, lyra_pass_check_multiple_use);
     lyra_function_all_blocks(fn, lyra_pass_into_semi_ssa);
     lyra_function_all_blocks(fn, lyra_pass_type_inference);
     lyra_function_all_blocks(fn, lyra_pass_const_prop);
