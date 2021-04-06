@@ -13,6 +13,5 @@ sources = run_command(prog_python, [
     './build-scripts/meson_files.py'
 ]).stdout().split('\n')
 
-executable('lyra-test',
-    sources,
-    include_directories: include_directories('src'))
+liblyra = static_library('lyra', sources,
+    include_directories: include_directories('./lyra'))
