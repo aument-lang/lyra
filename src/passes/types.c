@@ -1,3 +1,9 @@
+// This source file is part of the Aument language
+// Copyright (c) 2021 the aument contributors
+//
+// Licensed under Apache License v2.0
+// See LICENSE.txt for license information
+
 #include <stdlib.h>
 #include <string.h>
 
