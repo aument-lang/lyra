@@ -24,7 +24,7 @@ lyra_function_shared_add_variable(struct lyra_function_shared *shared,
 struct lyra_function *lyra_function_new(size_t name, size_t num_args,
                                         struct lyra_ctx *ctx) {
     struct lyra_function *fn =
-        lyra_ctx_mem_malloc(ctx, sizeof(struct lyra_function));
+        lyra_ctx_gc_malloc_root(ctx, sizeof(struct lyra_function));
     fn->blocks = (struct lyra_block_array){0};
     fn->shared = (struct lyra_function_shared){0};
     fn->name = name;

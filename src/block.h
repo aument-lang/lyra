@@ -41,7 +41,7 @@ struct lyra_block {
     struct lyra_block_connector connector;
 };
 
-LYRA_ARRAY_STRUCT(struct lyra_block, lyra_block_array, 1)
+LYRA_ARRAY_STRUCT_A(struct lyra_block, lyra_block_array, 1, lyra_ctx_gc)
 
 void lyra_block_init(struct lyra_block *block);
 

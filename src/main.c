@@ -33,7 +33,7 @@ int main() {
 
         {
             struct lyra_insn *insn =
-                lyra_insn_imm(LYRA_OP_LOAD_ARG, LYRA_INSN_I32(0), 0, &ctx);
+                lyra_insn_imm(LYRA_OP_MOV_I32, LYRA_INSN_I32(0), 0, &ctx);
             lyra_block_add_insn(&block, insn);
         }
         {
@@ -68,6 +68,7 @@ int main() {
     lyra_function_all_blocks(fn, lyra_pass_type_inference);
     lyra_function_all_blocks(fn, lyra_pass_const_prop);
     lyra_function_all_blocks(fn, lyra_pass_purge_dead_code);
+    lyra_ctx_gc_run(&ctx);
 
     lyra_block_print(&fn->blocks.data[0]);
 

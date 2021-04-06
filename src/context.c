@@ -52,12 +52,13 @@ static void lyra_ctx_ptr_set_del(struct lyra_ctx_ptr_set *set);
 
 static size_t lyra_ctx_ptr_set_probe(struct lyra_ctx_ptr_set *set,
                                      size_t i, size_t h);
+static struct lyra_ctx_ptr *lyra_ctx_ptr_set_get_ptr(struct lyra_ctx_ptr_set *set, void *ptr);
 static void lyra_ctx_ptr_set_add_ptr(struct lyra_ctx_ptr_set *set,
                                      void *ptr, size_t size, int flags);
 static void lyra_ctx_ptr_set_remove_ptr(struct lyra_ctx_ptr_set *set,
                                         void *ptr);
 static void *lyra_ctx_ptr_set_add(struct lyra_ctx_ptr_set *set, void *ptr,
-                                  size_t size, int flags, int *do_gc_out);
+                                  size_t size, int flags);
 static void lyra_ctx_ptr_set_remove(struct lyra_ctx_ptr_set *set,
                                     void *ptr);
 
@@ -89,6 +90,18 @@ size_t lyra_ctx_ptr_set_probe(struct lyra_ctx_ptr_set *set, size_t i,
         v = set->nslots + v;
     }
     return v;
+}
+
+struct lyra_ctx_ptr *lyra_ctx_ptr_set_get_ptr(struct lyra_ctx_ptr_set *set, void *ptr) {
+  size_t i, j, h;
+  i = hash(ptr) % set->nslots; j = 0;
+  while (1) {
+    h = set->items[i].hash;
+    if (h == 0 || j > lyra_ctx_ptr_set_probe(set, i, h)) { return NULL; }
+    if (set->items[i].ptr == ptr) { return &set->items[i]; }
+    i = (i+1) % set->nslots; j++;
+  }
+  return NULL;
 }
 
 void lyra_ctx_ptr_set_add_ptr(struct lyra_ctx_ptr_set *set, void *ptr,
@@ -171,7 +184,7 @@ void lyra_ctx_ptr_set_remove_ptr(struct lyra_ctx_ptr_set *set, void *ptr) {
 }
 
 void *lyra_ctx_ptr_set_add(struct lyra_ctx_ptr_set *set, void *ptr,
-                           size_t size, int flags, int *do_gc_out) {
+                           size_t size, int flags) {
 
     set->nitems++;
     set->maxptr = ((uintptr_t)ptr) + size > set->maxptr
@@ -182,9 +195,6 @@ void *lyra_ctx_ptr_set_add(struct lyra_ctx_ptr_set *set, void *ptr,
 
     if (lyra_ctx_ptr_set_resize_more(set)) {
         lyra_ctx_ptr_set_add_ptr(set, ptr, size, flags);
-        if (do_gc_out && set->nitems > set->mitems) {
-            *do_gc_out = 1;
-        }
         return ptr;
     } else {
         set->nitems--;
@@ -271,8 +281,9 @@ void lyra_ctx_init(struct lyra_ctx *ctx) {
     memset(ctx, 0, sizeof(struct lyra_ctx));
     lyra_ctx_ptr_set_init(&ctx->manual);
     lyra_ctx_ptr_set_init(&ctx->gc);
-    ctx->gc_paused = 1;
 }
+
+static void gc_sweep(struct lyra_ctx_ptr_set *gc);
 
 void lyra_ctx_del(struct lyra_ctx *ctx) {
     for (size_t i = 0; i < ctx->manual.nslots; i++) {
@@ -283,6 +294,12 @@ void lyra_ctx_del(struct lyra_ctx *ctx) {
     }
     lyra_ctx_ptr_set_del(&ctx->manual);
 
+    for (size_t i = 0; i < ctx->gc.nslots; i++) {
+        struct lyra_ctx_ptr *data = &ctx->gc.items[i];
+        if (data->hash == 0)
+            continue;
+        free(data->ptr);
+    }
     lyra_ctx_ptr_set_del(&ctx->gc);
 }
 
@@ -290,7 +307,7 @@ void *lyra_ctx_mem_malloc(struct lyra_ctx *ctx, size_t size) {
     void *ptr = malloc(size);
     if (ptr == 0)
         return 0;
-    return lyra_ctx_ptr_set_add(&ctx->manual, ptr, size, 0, 0);
+    return lyra_ctx_ptr_set_add(&ctx->manual, ptr, 0, 0);
 }
 
 void *lyra_ctx_mem_calloc(struct lyra_ctx *ctx, size_t nmemb,
@@ -298,7 +315,7 @@ void *lyra_ctx_mem_calloc(struct lyra_ctx *ctx, size_t nmemb,
     void *ptr = calloc(nmemb, size);
     if (ptr == 0)
         return 0;
-    return lyra_ctx_ptr_set_add(&ctx->manual, ptr, size, 0, 0);
+    return lyra_ctx_ptr_set_add(&ctx->manual, ptr, 0, 0);
 }
 
 void *lyra_ctx_mem_realloc(struct lyra_ctx *ctx, void *ptr, size_t size) {
@@ -306,7 +323,7 @@ void *lyra_ctx_mem_realloc(struct lyra_ctx *ctx, void *ptr, size_t size) {
     void *new_ptr = realloc(ptr, size);
     if (new_ptr != old_ptr) {
         lyra_ctx_ptr_set_remove(&ctx->manual, old_ptr);
-        return lyra_ctx_ptr_set_add(&ctx->manual, new_ptr, size, 0, 0);
+        return lyra_ctx_ptr_set_add(&ctx->manual, new_ptr, 0, 0);
     }
     return new_ptr;
 }
@@ -455,7 +472,7 @@ static void gc_sweep(struct lyra_ctx_ptr_set *gc) {
 
     for (i = 0; i < gc->nfrees; i++) {
         if (gc->frees[i].ptr) {
-            fprintf(stderr, "free %p", gc->frees[i].ptr);
+            fprintf(stderr, "free %p\n", gc->frees[i].ptr);
             free(gc->frees[i].ptr);
         }
     }
@@ -466,55 +483,44 @@ static void gc_sweep(struct lyra_ctx_ptr_set *gc) {
 }
 
 void lyra_ctx_gc_run(struct lyra_ctx *ctx) {
-    if (!ctx->gc_paused) {
-        gc_mark(&ctx->gc);
-        gc_sweep(&ctx->gc);
-    }
+    gc_mark(&ctx->gc);
+    gc_sweep(&ctx->gc);
 }
 
-void *lyra_ctx_gc_alloc(struct lyra_ctx *ctx, size_t size) {
+void *lyra_ctx_gc_malloc(struct lyra_ctx *ctx, size_t size) {
     void *ptr = malloc(size);
     if (ptr == 0)
         return 0;
-    int do_gc = 0;
-    ptr = lyra_ctx_ptr_set_add(&ctx->gc, ptr, size, 0, &do_gc);
-    if (do_gc)
-        lyra_ctx_gc_run(ctx);
-    return ptr;
+    return lyra_ctx_ptr_set_add(&ctx->gc, ptr, size, 0);
 }
 
-void *lyra_ctx_gc_alloc_root(struct lyra_ctx *ctx, size_t size) {
+void *lyra_ctx_gc_malloc_root(struct lyra_ctx *ctx, size_t size) {
     void *ptr = malloc(size);
     if (ptr == 0)
         return 0;
-    int do_gc = 0;
-    ptr = lyra_ctx_ptr_set_add(&ctx->gc, ptr, size, TGC_ROOT, &do_gc);
-    if (do_gc)
-        lyra_ctx_gc_run(ctx);
-    return ptr;
+    return lyra_ctx_ptr_set_add(&ctx->gc, ptr, size, TGC_ROOT);
 }
 
 void *lyra_ctx_gc_calloc(struct lyra_ctx *ctx, size_t nmemb, size_t size) {
     void *ptr = calloc(nmemb, size);
     if (ptr == 0)
         return 0;
-    int do_gc = 0;
-    ptr = lyra_ctx_ptr_set_add(&ctx->gc, ptr, size, 0, &do_gc);
-    if (do_gc)
-        lyra_ctx_gc_run(ctx);
+    ptr = lyra_ctx_ptr_set_add(&ctx->gc, ptr, size, 0);
     return ptr;
 }
 
 void *lyra_ctx_gc_realloc(struct lyra_ctx *ctx, void *ptr, size_t size) {
     void *old_ptr = ptr;
     void *new_ptr = realloc(ptr, size);
+    
+    struct lyra_ctx_ptr *old_ptr_data = lyra_ctx_ptr_set_get_ptr(&ctx->gc, old_ptr);
     if (new_ptr != old_ptr) {
+        const int old_flags = old_ptr_data->flags;
         lyra_ctx_ptr_set_remove(&ctx->gc, old_ptr);
-        int do_gc = 0;
-        ptr = lyra_ctx_ptr_set_add(&ctx->gc, new_ptr, size, 0, &do_gc);
-        if (do_gc)
-            lyra_ctx_gc_run(ctx);
-        return ptr;
+        return lyra_ctx_ptr_set_add(&ctx->gc, new_ptr, size, old_flags);
+    } else {
+        old_ptr_data->size = size;
     }
+
     return new_ptr;
 }
