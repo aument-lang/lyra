@@ -98,37 +98,48 @@ int lyra_pass_type_inference(struct lyra_block *block,
             break;
         }
         // Generic binary operations into specialized ops
-        case LYRA_OP_ADD_VAR: {
-            enum lyra_value_type ltype =
-                shared->variable_types[insn->left_var];
-            enum lyra_value_type rtype =
-                shared->variable_types[insn->right_operand.var];
-            if (IS_I32(ltype) && IS_I32(rtype)) {
-                SET_TYPE(insn->dest_var, LYRA_VALUE_I32);
-                insn->type = LYRA_OP_ADD_PRIM;
-            } else if ((IS_I32(ltype) && IS_F64(rtype)) ||
-                       (IS_F64(ltype) && IS_I32(rtype))) {
-                SET_TYPE(insn->dest_var, LYRA_VALUE_F64);
-                insn->type = LYRA_OP_ADD_PRIM;
-                insn->right_operand.var = generate_cast(
-                    insn, insn->right_operand.var, LYRA_VALUE_F64,
-                    LYRA_OP_ENSURE_F64_PRIM, block, shared, ctx);
-            } else if (IS_F64(ltype) && IS_F64(rtype)) {
-                SET_TYPE(insn->dest_var, LYRA_VALUE_F64);
-                insn->type = LYRA_OP_ADD_PRIM;
-            } else if (lyra_value_type_is_primitive_num(ltype)) {
-                abort(); // TODO
-            } else if (lyra_value_type_is_primitive_num(rtype)) {
-                SET_TYPE(insn->dest_var, LYRA_VALUE_NUM);
-                insn->type = SELECT_NUM_BIN_OP(rtype, LYRA_OP_ADD);
-                insn->left_var =
-                    generate_cast(insn, insn->left_var, LYRA_VALUE_NUM,
-                                  LYRA_OP_ENSURE_NUM, block, shared, ctx);
-            } else {
-                abort(); // TODO
-            }
-            break;
-        }
+#define BIN_OP(BASE_OP)                                                   \
+    {                                                                     \
+        enum lyra_value_type ltype =                                      \
+            shared->variable_types[insn->left_var];                       \
+        enum lyra_value_type rtype =                                      \
+            shared->variable_types[insn->right_operand.var];              \
+        if (IS_I32(ltype) && IS_I32(rtype)) {                             \
+            SET_TYPE(insn->dest_var, LYRA_VALUE_I32);                     \
+            insn->type = BASE_OP##_PRIM;                                  \
+        } else if ((IS_I32(ltype) && IS_F64(rtype)) ||                    \
+                   (IS_F64(ltype) && IS_I32(rtype))) {                    \
+            SET_TYPE(insn->dest_var, LYRA_VALUE_F64);                     \
+            insn->type = BASE_OP##_PRIM;                                  \
+            insn->right_operand.var = generate_cast(                      \
+                insn, insn->right_operand.var, LYRA_VALUE_F64,            \
+                LYRA_OP_ENSURE_F64_PRIM, block, shared, ctx);             \
+        } else if (IS_F64(ltype) && IS_F64(rtype)) {                      \
+            SET_TYPE(insn->dest_var, LYRA_VALUE_F64);                     \
+            insn->type = BASE_OP##_PRIM;                                  \
+        } else if (lyra_value_type_is_primitive_num(ltype)) {             \
+            abort(); /* TODO */                                           \
+        } else if (lyra_value_type_is_primitive_num(rtype)) {             \
+            SET_TYPE(insn->dest_var, LYRA_VALUE_NUM);                     \
+            insn->type = SELECT_NUM_BIN_OP(rtype, BASE_OP);               \
+            insn->left_var =                                              \
+                generate_cast(insn, insn->left_var, LYRA_VALUE_NUM,       \
+                              LYRA_OP_ENSURE_NUM, block, shared, ctx);    \
+        } else if (ltype == LYRA_VALUE_ANY && rtype == LYRA_VALUE_ANY) {  \
+            shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;      \
+        } else {                                                          \
+            abort(); /* TODO */                                           \
+        }                                                                 \
+        break;                                                            \
+    }
+        case LYRA_OP_ADD_VAR:
+            BIN_OP(LYRA_OP_ADD)
+        case LYRA_OP_SUB_VAR:
+            BIN_OP(LYRA_OP_SUB)
+        case LYRA_OP_MUL_VAR:
+            BIN_OP(LYRA_OP_MUL)
+#undef BIN_OP
+        // Comparison operations
         case LYRA_OP_EQ_VAR:
         case LYRA_OP_NEQ_VAR:
         case LYRA_OP_LT_VAR:
