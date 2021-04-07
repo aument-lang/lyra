@@ -250,7 +250,7 @@ with open("./lyra/bc_data/types.txt", "w") as insn_type_f:
 
     insn_type_defs = \
         "#pragma once\n" \
-        '#include "platform.h"\n' \
+        '#include "../platform.h"\n' \
         "enum lyra_insn_type {\n"
     for insn in Instruction.instances:
         insn_type_defs += f"LYRA_OP_{insn.name},\n"
@@ -300,7 +300,7 @@ with open("./lyra/bc_data/codegen.txt", "w") as insn_codegen_f:
 #include <stdint.h>
 #include "../insn.h"
 #include "../comp.h"
-#include "types.txt"
+#include "./types.txt"
 void lyra_insn_comp(struct lyra_insn *insn, struct lyra_comp *c){
 """
 

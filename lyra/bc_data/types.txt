@@ -1,5 +1,5 @@
 #pragma once
-#include "platform.h"
+#include "../platform.h"
 enum lyra_insn_type {
 LYRA_OP_MOV_VAR,
 LYRA_OP_MOV_I32,
