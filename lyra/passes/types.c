@@ -159,6 +159,7 @@ int lyra_pass_type_inference(struct lyra_block *block,
         case LYRA_OP_GT_VAR:
         case LYRA_OP_LEQ_VAR:
         case LYRA_OP_GEQ_VAR: {
+            SET_TYPE(insn->dest_var, LYRA_VALUE_BOOL);
             enum lyra_value_type ltype =
                 shared->variable_types[insn->left_var];
             enum lyra_value_type rtype =
@@ -293,6 +294,7 @@ int lyra_pass_type_inference(struct lyra_block *block,
         // Call instructions
         case LYRA_OP_CALL:
         case LYRA_OP_CALL_FLAT: {
+            shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;
             struct lyra_insn_call_args *args =
                 insn->right_operand.call_args;
             for (size_t i = 0; i < args->length; i++) {
