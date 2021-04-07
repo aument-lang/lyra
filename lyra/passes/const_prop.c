@@ -89,7 +89,7 @@ int lyra_pass_const_prop(struct lyra_block *block,
             if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
                                 insn->dest_var))
                 continue;
-            if(constants[insn->left_var].type == LYRA_VALUE_I32) {
+            if (constants[insn->left_var].type == LYRA_VALUE_I32) {
                 constants[insn->dest_var] = (struct lyra_value){
                     .data.f64 = (double)constants[insn->left_var].data.i32,
                     .type = LYRA_VALUE_F64,
@@ -220,32 +220,39 @@ int lyra_pass_const_prop(struct lyra_block *block,
             constants[insn->left_var].type;                               \
         const enum lyra_value_type rtype =                                \
             constants[insn->right_operand.var].type;                      \
+        int32_t result = 0;                                               \
+        int has_result = 0;                                               \
         if (ltype == LYRA_VALUE_I32 && rtype == LYRA_VALUE_I32) {         \
-            struct lyra_value result = (struct lyra_value){               \
-                .data.i32 =                                               \
-                    constants[insn->left_var]                             \
-                        .data.i32 C_OP constants[insn->right_operand.var] \
-                        .data.i32,                                        \
-                .type = LYRA_VALUE_BOOL,                                  \
-            };                                                            \
-            constants[insn->dest_var] = result;                           \
-            shared->variable_types[insn->dest_var] = LYRA_VALUE_BOOL;     \
-            insn->type = LYRA_OP_MOV_BOOL;                                \
-            insn->left_var = 0;                                           \
-            insn->right_operand = LYRA_INSN_I32(result.data.i32);         \
+            result =                                                      \
+                constants[insn->left_var]                                 \
+                    .data.i32 C_OP constants[insn->right_operand.var]     \
+                    .data.i32;                                            \
+            has_result = 1;                                               \
         } else if (ltype == LYRA_VALUE_F64 && rtype == LYRA_VALUE_F64) {  \
-            struct lyra_value result = (struct lyra_value){               \
-                .data.i32 =                                               \
-                    constants[insn->left_var]                             \
-                        .data.f64 C_OP constants[insn->right_operand.var] \
-                        .data.f64,                                        \
+            result =                                                      \
+                constants[insn->left_var]                                 \
+                    .data.f64 C_OP constants[insn->right_operand.var]     \
+                    .data.f64;                                            \
+            has_result = 1;                                               \
+        } else if (ltype == LYRA_VALUE_I32 && rtype == LYRA_VALUE_F64) {  \
+            result = ((double)constants[insn->left_var].data.i32)         \
+                         C_OP constants[insn->right_operand.var]          \
+                             .data.f64;                                   \
+            has_result = 1;                                               \
+        } else if (ltype == LYRA_VALUE_F64 && rtype == LYRA_VALUE_I32) {  \
+            result = constants[insn->left_var].data.f64 C_OP(             \
+                (double)constants[insn->right_operand.var].data.f64);     \
+            has_result = 1;                                               \
+        }                                                                 \
+        if (has_result) {                                                 \
+            constants[insn->dest_var] = (struct lyra_value){              \
+                .data.i32 = result,                                       \
                 .type = LYRA_VALUE_BOOL,                                  \
             };                                                            \
-            constants[insn->dest_var] = result;                           \
             shared->variable_types[insn->dest_var] = LYRA_VALUE_BOOL;     \
             insn->type = LYRA_OP_MOV_BOOL;                                \
             insn->left_var = 0;                                           \
-            insn->right_operand = LYRA_INSN_I32(result.data.i32);         \
+            insn->right_operand = LYRA_INSN_I32(result);                  \
         }                                                                 \
         continue;                                                         \
     }
