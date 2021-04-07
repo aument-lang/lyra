@@ -56,6 +56,13 @@ int lyra_pass_const_prop(struct lyra_block *block,
             };
             break;
         }
+        case LYRA_OP_MOV_F64: {
+            constants[insn->dest_var] = (struct lyra_value){
+                .data.f64 = insn->right_operand.f64,
+                .type = LYRA_VALUE_F64,
+            };
+            break;
+        }
         case LYRA_OP_MOV_BOOL: {
             constants[insn->dest_var] = (struct lyra_value){
                 .data.i32 = insn->right_operand.i32,

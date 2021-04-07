@@ -28,6 +28,15 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
                 LYRA_BA_SET_BIT(used_vars, insn->left_var);
             if (lyra_insn_type_has_right_var(insn->type))
                 LYRA_BA_SET_BIT(used_vars, insn->right_operand.var);
+            else if (insn->type == LYRA_OP_CALL ||
+                     insn->type == LYRA_OP_CALL_FLAT) {
+                struct lyra_insn_call_args *args =
+                    insn->right_operand.call_args;
+                for (size_t i = 0; i < args->length; i++) {
+                    LYRA_BA_SET_BIT(used_vars, args->data[i]);
+                }
+                LYRA_BA_SET_BIT(used_vars, insn->dest_var);
+            }
         }
         for (size_t i = 0; i < shared->managed_vars_len; i++) {
             if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use, i))

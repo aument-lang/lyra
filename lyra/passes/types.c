@@ -26,6 +26,44 @@ static size_t generate_cast(struct lyra_insn *insn, size_t var,
     return new_var;
 }
 
+static size_t generate_cast_to_any(struct lyra_insn *insn, size_t var,
+                                   struct lyra_block *block,
+                                   struct lyra_function_shared *shared,
+                                   struct lyra_ctx *ctx) {
+    const size_t new_var =
+        lyra_function_shared_add_variable(shared, LYRA_VALUE_ANY, ctx);
+
+    enum lyra_insn_type cast_op;
+    switch (shared->variable_types[var]) {
+    case LYRA_VALUE_UNTYPED:
+    case LYRA_VALUE_ANY: {
+        abort();
+        break;
+    }
+    case LYRA_VALUE_BOOL: {
+        cast_op = LYRA_OP_ENSURE_VALUE_BOOL;
+        break;
+    }
+    case LYRA_VALUE_I32: {
+        cast_op = LYRA_OP_ENSURE_VALUE_I32;
+        break;
+    }
+    case LYRA_VALUE_F64: {
+        cast_op = LYRA_OP_ENSURE_VALUE_F64;
+        break;
+    }
+    case LYRA_VALUE_NUM: {
+        cast_op = LYRA_OP_ENSURE_VALUE_NUM;
+        break;
+    }
+    }
+
+    struct lyra_insn *new_insn =
+        lyra_insn_new(cast_op, var, LYRA_INSN_REG(0), new_var, ctx);
+    lyra_block_insert_insn(block, insn->prev, new_insn);
+    return new_var;
+}
+
 #define IS_I32(TYPE) (TYPE == LYRA_VALUE_I32)
 #define IS_F64(TYPE) (TYPE == LYRA_VALUE_F64)
 #define IS_NUM(TYPE) (TYPE == LYRA_VALUE_NUM)
@@ -139,15 +177,10 @@ int lyra_pass_type_inference(struct lyra_block *block,
         }
         // Integer-only binary operations
         case LYRA_OP_BOR_I32:
-            LYRA_FALLTHROUGH;
         case LYRA_OP_BXOR_I32:
-            LYRA_FALLTHROUGH;
         case LYRA_OP_BAND_I32:
-            LYRA_FALLTHROUGH;
         case LYRA_OP_BSHL_I32:
-            LYRA_FALLTHROUGH;
         case LYRA_OP_BSHR_I32:
-            LYRA_FALLTHROUGH;
         case LYRA_OP_MOD_I32: {
             enum lyra_value_type ltype =
                 shared->variable_types[insn->left_var];
@@ -182,6 +215,22 @@ int lyra_pass_type_inference(struct lyra_block *block,
             }
             break;
         }
+        // Call instructions
+        case LYRA_OP_CALL:
+        case LYRA_OP_CALL_FLAT: {
+            struct lyra_insn_call_args *args =
+                insn->right_operand.call_args;
+            for (size_t i = 0; i < args->length; i++) {
+                if (shared->variable_types[args->data[i]] !=
+                    LYRA_VALUE_ANY) {
+                    args->data[i] = generate_cast_to_any(
+                        insn, args->data[i], block, shared, ctx);
+                }
+            }
+            shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;
+            break;
+        }
+        // Other
         default: {
             if (lyra_insn_type_has_dest(insn->type)) {
                 shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;

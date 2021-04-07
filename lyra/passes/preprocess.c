@@ -22,26 +22,12 @@ int lyra_pass_check_multiple_use(struct lyra_block *block,
         calloc(LYRA_BA_LEN(shared->managed_vars_len), 1);
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
-        switch (insn->type) {
-        // mov instructions
-        case LYRA_OP_MOV_I32:
-        case LYRA_OP_MOV_F64: {
-            LYRA_BA_SET_BIT(owned_vars, insn->left_var);
-            LYRA_FALLTHROUGH;
-        }
-        case LYRA_OP_MOV_VAR: {
+        if (lyra_insn_type_has_dest(insn->type))
             LYRA_BA_SET_BIT(owned_vars, insn->dest_var);
-            break;
-        }
-        // everything else
-        default: {
-            if (lyra_insn_type_has_left_var(insn->type))
-                LYRA_BA_SET_BIT(used_vars, insn->left_var);
-            if (lyra_insn_type_has_right_var(insn->type))
-                LYRA_BA_SET_BIT(used_vars, insn->right_operand.var);
-            break;
-        }
-        }
+        if (lyra_insn_type_has_left_var(insn->type))
+            LYRA_BA_SET_BIT(used_vars, insn->left_var);
+        if (lyra_insn_type_has_right_var(insn->type))
+            LYRA_BA_SET_BIT(used_vars, insn->right_operand.var);
     }
     for (size_t i = 0; i < shared->managed_vars_len; i++) {
         if (LYRA_BA_GET_BIT(used_vars, i) &&
@@ -79,6 +65,14 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
             insn->right_operand.var =
                 size_t_array_at(variable_mapping, shared->managed_vars_len,
                                 insn->right_operand.var);
+        else if (insn->type == LYRA_OP_CALL ||
+                 insn->type == LYRA_OP_CALL_FLAT) {
+            for (size_t i = 0; i < insn->right_operand.call_args->length;
+                 i++)
+                insn->right_operand.call_args->data[i] = size_t_array_at(
+                    variable_mapping, shared->managed_vars_len,
+                    insn->right_operand.call_args->data[i]);
+        }
         if (has_dest_reg) {
             if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
                                 insn->dest_var))

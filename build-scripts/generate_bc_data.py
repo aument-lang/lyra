@@ -44,14 +44,13 @@ lyra_comp_print_str(c,"};");
 lyra_comp_print_str(c,"v");
 lyra_comp_print_isize(c,insn->dest_var);
 lyra_comp_print_str(c,"=");
-lyra_comp_print_isize(c, insn->right_operand.call_args->fn_idx);
+lyra_insn_call_args_comp_name(insn->right_operand.call_args, c);
 lyra_comp_print_str(c,"(&_args);}");\
 """
     
     def call_args_flat(self):
         self.c_source += """\
-lyra_comp_print_str(c,"f");
-lyra_comp_print_isize(c, insn->right_operand.call_args->fn_idx);
+lyra_insn_call_args_comp_name(insn->right_operand.call_args, c);
 lyra_comp_print_str(c,"(");
 if(insn->right_operand.call_args->length > 0) {
     lyra_comp_print_str(c, "v");
@@ -121,6 +120,12 @@ class Instruction:
             compiler.right_var()
             compiler.raw(")")
             return compiler.end()
+        elif "c_unary_func" in self.options:
+            compiler.assign_dest_var()
+            compiler.raw(self.options["c_unary_func"] + "(")
+            compiler.left_var()
+            compiler.raw(")")
+            return compiler.end()
         elif "c_codegen" in self.options:
             self.options["c_codegen"](compiler)
             return compiler.end()
@@ -147,47 +152,19 @@ Instruction("MOV_F64", ARG_TYPE_NONE, ARG_TYPE_F64, c_codegen=gen_mov_f64)
 
 # Value assertion
 
-def gen_ensure_i32(compiler):
-    compiler.assign_dest_var()
-    compiler.raw("au_value_get_int(")
-    compiler.left_var()
-    compiler.raw(")")
-Instruction("ENSURE_I32", ARG_TYPE_VAR, c_codegen=gen_ensure_i32)
+Instruction("ENSURE_I32", ARG_TYPE_VAR, c_unary_func="au_value_get_int")
+Instruction("ENSURE_I32_NUM", ARG_TYPE_VAR, c_unary_func="au_num_into_i32")
 
-def gen_ensure_f64(compiler):
-    compiler.assign_dest_var()
-    compiler.raw("au_value_get_float(")
-    compiler.left_var()
-    compiler.raw(")")
-Instruction("ENSURE_F64", ARG_TYPE_VAR, c_codegen=gen_ensure_f64)
+Instruction("ENSURE_F64", ARG_TYPE_VAR, c_unary_func="au_value_get_float")
+Instruction("ENSURE_F64_PRIM", ARG_TYPE_VAR, c_unary_func="(double)")
+Instruction("ENSURE_F64_NUM", ARG_TYPE_VAR, c_unary_func="au_num_into_f64")
 
-def gen_ensure_f64_prim(compiler):
-    compiler.assign_dest_var()
-    compiler.raw("(double)(")
-    compiler.left_var()
-    compiler.raw(")")
-Instruction("ENSURE_F64_PRIM", ARG_TYPE_VAR, c_codegen=gen_ensure_f64_prim)
+Instruction("ENSURE_NUM", ARG_TYPE_VAR, c_unary_func="au_num_from_value")
 
-def gen_ensure_num(compiler):
-    compiler.assign_dest_var()
-    compiler.raw("au_num_from_value(")
-    compiler.left_var()
-    compiler.raw(")")
-Instruction("ENSURE_NUM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_ensure_num)
-
-def gen_ensure_i32_num(compiler):
-    compiler.assign_dest_var()
-    compiler.raw("au_num_into_i32(")
-    compiler.left_var()
-    compiler.raw(")")
-Instruction("ENSURE_I32_NUM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_ensure_i32_num)
-
-def gen_ensure_f64_num(compiler):
-    compiler.assign_dest_var()
-    compiler.raw("au_num_into_f64(")
-    compiler.left_var()
-    compiler.raw(")")
-Instruction("ENSURE_F64_NUM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_ensure_f64_num)
+Instruction("ENSURE_VALUE_I32", ARG_TYPE_VAR, c_unary_func="au_value_i32")
+Instruction("ENSURE_VALUE_F64", ARG_TYPE_VAR, c_unary_func="au_value_double")
+Instruction("ENSURE_VALUE_BOOL", ARG_TYPE_VAR, c_unary_func="au_value_bool")
+Instruction("ENSURE_VALUE_NUM", ARG_TYPE_VAR, c_unary_func="au_num_into_value")
 
 # Binary operations
 
