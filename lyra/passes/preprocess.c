@@ -29,7 +29,8 @@ int lyra_pass_check_multiple_use(struct lyra_block *block,
         if (lyra_insn_type_has_right_var(insn->type))
             LYRA_BA_SET_BIT(used_vars, insn->right_operand.var);
     }
-    memset(shared->managed_vars_multiple_use, 0, LYRA_BA_LEN(shared->managed_vars_len));
+    memset(shared->managed_vars_multiple_use, 0,
+           LYRA_BA_LEN(shared->managed_vars_len));
     for (size_t i = 0; i < shared->managed_vars_len; i++) {
         if (LYRA_BA_GET_BIT(used_vars, i) &&
             !LYRA_BA_GET_BIT(owned_vars, i)) {

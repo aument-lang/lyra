@@ -166,6 +166,16 @@ Instruction("ENSURE_VALUE_F64", ARG_TYPE_VAR, c_unary_func="au_value_double")
 Instruction("ENSURE_VALUE_BOOL", ARG_TYPE_VAR, c_unary_func="au_value_bool")
 Instruction("ENSURE_VALUE_NUM", ARG_TYPE_VAR, c_unary_func="au_num_into_value")
 
+# Unary operations
+
+Instruction("NOT_VAR", ARG_TYPE_VAR, c_unary_func="au_value_not")
+Instruction("NOT_PRIM", ARG_TYPE_VAR, c_unary_func="!")
+
+Instruction("NEG_VAR", ARG_TYPE_VAR, c_unary_func="-")
+Instruction("NEG_NUM", ARG_TYPE_VAR, c_unary_func="au_num_neg")
+
+Instruction("BNOT_I32", ARG_TYPE_VAR, c_unary_func="~")
+
 # Binary operations
 
 for (op, c_bin_func, c_bin_op, num_func) in [
