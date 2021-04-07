@@ -1,7 +1,7 @@
 import os
 import subprocess
 
-files = list(os.walk("src"))
+files = list(os.walk("lyra"))
 for root, _, files in files:
     for file in files:
         if file.endswith(".h") or file.endswith(".c"):

@@ -20,6 +20,18 @@ struct lyra_insn_call_args {
     size_t data[];
 };
 
+static inline struct lyra_insn_call_args *
+lyra_insn_call_args_new(size_t fn_idx, size_t length,
+                        struct lyra_ctx *ctx) {
+    struct lyra_insn_call_args *args = lyra_ctx_gc_malloc(
+        ctx, sizeof(struct lyra_insn_call_args) + length);
+    args->fn_idx = fn_idx;
+    args->length = length;
+    for (size_t i = 0; i < length; i++)
+        args->data[i] = 0;
+    return args;
+}
+
 union lyra_insn_operand {
     int32_t i32;
     double f64;
@@ -31,7 +43,8 @@ union lyra_insn_operand {
 #define LYRA_INSN_BOOL(X) ((union lyra_insn_operand){.i32 = (X)})
 #define LYRA_INSN_F64(X) ((union lyra_insn_operand){.f64 = (X)})
 #define LYRA_INSN_REG(X) ((union lyra_insn_operand){.var = (X)})
-#define LYRA_INSN_CALL_ARGS(X) ((union lyra_insn_operand){.call_args = (X)})
+#define LYRA_INSN_CALL_ARGS(X)                                            \
+    ((union lyra_insn_operand){.call_args = (X)})
 
 struct lyra_insn {
     struct lyra_insn *prev;

@@ -21,8 +21,8 @@
     static LYRA_UNUSED void NAME##_add(struct NAME *array, INNER el,      \
                                        struct lyra_ctx *ctx) {            \
         if (array->cap == 0) {                                            \
-            array->data = (INNER *)ALLOCATOR##_malloc(                    \
-                ctx, sizeof(INNER) * IN_CAP);                             \
+            array->data =                                                 \
+                (INNER *)ALLOCATOR##_malloc(ctx, sizeof(INNER) * IN_CAP); \
             array->cap = IN_CAP;                                          \
         } else if (array->len == array->cap) {                            \
             array->data = (INNER *)ALLOCATOR##_realloc(                   \
@@ -44,10 +44,11 @@
         array->data[idx] = thing;                                         \
     }
 
-#define LYRA_ARRAY_COPY(INNER, NAME, IN_CAP) LYRA_ARRAY_COPY_A(INNER, NAME, IN_CAP, lyra_ctx_mem)
+#define LYRA_ARRAY_COPY(INNER, NAME, IN_CAP)                              \
+    LYRA_ARRAY_COPY_A(INNER, NAME, IN_CAP, lyra_ctx_mem)
 
-#define LYRA_ARRAY_STRUCT_A(INNER, NAME, IN_CAP, ALLOCATOR)                            \
-    LYRA_ARRAY_COPY_A(INNER, NAME, IN_CAP, ALLOCATOR)                                  \
+#define LYRA_ARRAY_STRUCT_A(INNER, NAME, IN_CAP, ALLOCATOR)               \
+    LYRA_ARRAY_COPY_A(INNER, NAME, IN_CAP, ALLOCATOR)                     \
     static LYRA_UNUSED LYRA_ALWAYS_INLINE const INNER *NAME##_at_ptr(     \
         const struct NAME *array, size_t idx) {                           \
         if (LYRA_UNLIKELY(idx >= array->len))                             \
@@ -61,4 +62,5 @@
         return &array->data[idx];                                         \
     }
 
-#define LYRA_ARRAY_STRUCT(INNER, NAME, IN_CAP) LYRA_ARRAY_STRUCT_A(INNER, NAME, IN_CAP, lyra_ctx_mem)
+#define LYRA_ARRAY_STRUCT(INNER, NAME, IN_CAP)                            \
+    LYRA_ARRAY_STRUCT_A(INNER, NAME, IN_CAP, lyra_ctx_mem)

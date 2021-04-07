@@ -52,7 +52,8 @@ static void lyra_ctx_ptr_set_del(struct lyra_ctx_ptr_set *set);
 
 static size_t lyra_ctx_ptr_set_probe(struct lyra_ctx_ptr_set *set,
                                      size_t i, size_t h);
-static struct lyra_ctx_ptr *lyra_ctx_ptr_set_get_ptr(struct lyra_ctx_ptr_set *set, void *ptr);
+static struct lyra_ctx_ptr *
+lyra_ctx_ptr_set_get_ptr(struct lyra_ctx_ptr_set *set, void *ptr);
 static void lyra_ctx_ptr_set_add_ptr(struct lyra_ctx_ptr_set *set,
                                      void *ptr, size_t size, int flags);
 static void lyra_ctx_ptr_set_remove_ptr(struct lyra_ctx_ptr_set *set,
@@ -92,16 +93,23 @@ size_t lyra_ctx_ptr_set_probe(struct lyra_ctx_ptr_set *set, size_t i,
     return v;
 }
 
-struct lyra_ctx_ptr *lyra_ctx_ptr_set_get_ptr(struct lyra_ctx_ptr_set *set, void *ptr) {
-  size_t i, j, h;
-  i = hash(ptr) % set->nslots; j = 0;
-  while (1) {
-    h = set->items[i].hash;
-    if (h == 0 || j > lyra_ctx_ptr_set_probe(set, i, h)) { return NULL; }
-    if (set->items[i].ptr == ptr) { return &set->items[i]; }
-    i = (i+1) % set->nslots; j++;
-  }
-  return NULL;
+struct lyra_ctx_ptr *lyra_ctx_ptr_set_get_ptr(struct lyra_ctx_ptr_set *set,
+                                              void *ptr) {
+    size_t i, j, h;
+    i = hash(ptr) % set->nslots;
+    j = 0;
+    while (1) {
+        h = set->items[i].hash;
+        if (h == 0 || j > lyra_ctx_ptr_set_probe(set, i, h)) {
+            return NULL;
+        }
+        if (set->items[i].ptr == ptr) {
+            return &set->items[i];
+        }
+        i = (i + 1) % set->nslots;
+        j++;
+    }
+    return NULL;
 }
 
 void lyra_ctx_ptr_set_add_ptr(struct lyra_ctx_ptr_set *set, void *ptr,
@@ -512,8 +520,9 @@ void *lyra_ctx_gc_calloc(struct lyra_ctx *ctx, size_t nmemb, size_t size) {
 void *lyra_ctx_gc_realloc(struct lyra_ctx *ctx, void *ptr, size_t size) {
     void *old_ptr = ptr;
     void *new_ptr = realloc(ptr, size);
-    
-    struct lyra_ctx_ptr *old_ptr_data = lyra_ctx_ptr_set_get_ptr(&ctx->gc, old_ptr);
+
+    struct lyra_ctx_ptr *old_ptr_data =
+        lyra_ctx_ptr_set_get_ptr(&ctx->gc, old_ptr);
     if (new_ptr != old_ptr) {
         const int old_flags = old_ptr_data->flags;
         lyra_ctx_ptr_set_remove(&ctx->gc, old_ptr);
