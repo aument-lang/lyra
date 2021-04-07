@@ -14,16 +14,24 @@
 #include "bc_data/types.txt"
 #include "context.h"
 
+struct lyra_insn_call_args {
+    size_t fn_idx;
+    size_t length;
+    size_t data[];
+};
+
 union lyra_insn_operand {
     int32_t i32;
     double f64;
     size_t var;
+    struct lyra_insn_call_args *call_args;
 };
 
 #define LYRA_INSN_I32(X) ((union lyra_insn_operand){.i32 = (X)})
 #define LYRA_INSN_BOOL(X) ((union lyra_insn_operand){.i32 = (X)})
 #define LYRA_INSN_F64(X) ((union lyra_insn_operand){.f64 = (X)})
 #define LYRA_INSN_REG(X) ((union lyra_insn_operand){.var = (X)})
+#define LYRA_INSN_CALL_ARGS(X) ((union lyra_insn_operand){.call_args = (X)})
 
 struct lyra_insn {
     struct lyra_insn *prev;

@@ -31,6 +31,38 @@ class Compiler:
     def raw(self, string):
         self.c_source += f'lyra_comp_print_str(c,"{string}");\n'
     
+    def call_args(self):
+        self.c_source += """\
+lyra_comp_print_str(c,"{au_value_t _args={");
+for(size_t i = 0; i < insn->right_operand.call_args->length; i++) {
+    lyra_comp_print_str(c, "v");
+    lyra_comp_print_isize(c, insn->right_operand.call_args->data[i]);
+    lyra_comp_print_str(c, ",");
+}
+lyra_comp_print_str(c,"};");
+lyra_comp_print_str(c,"v");
+lyra_comp_print_isize(c,insn->dest_var);
+lyra_comp_print_str(c,"=");
+lyra_comp_print_isize(c, insn->right_operand.call_args->fn_idx);
+lyra_comp_print_str(c,"(&_args);}");\
+"""
+    
+    def call_args_flat(self):
+        self.c_source += """\
+lyra_comp_print_str(c,"f");
+lyra_comp_print_isize(c, insn->right_operand.call_args->fn_idx);
+lyra_comp_print_str(c,"(");
+if(insn->right_operand.call_args->length > 0) {
+    lyra_comp_print_str(c, "v");
+    lyra_comp_print_isize(c, insn->right_operand.call_args->data[0]);
+    for(size_t i = 1; i < insn->right_operand.call_args->length; i++) {
+        lyra_comp_print_str(c, ",v");
+        lyra_comp_print_isize(c, insn->right_operand.call_args->data[i]);
+    }
+}
+lyra_comp_print_str(c,")");\
+"""
+    
     def end(self):
         self.raw(";")
         return self.c_source
@@ -203,9 +235,18 @@ def gen_load_arg(compiler):
     compiler.raw("]")
 Instruction("LOAD_ARG", ARG_TYPE_NONE, ARG_TYPE_I32, c_codegen=gen_load_arg)
 
+def gen_call(compiler):
+    compiler.call_args()
+Instruction("CALL", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_call, has_side_effect=True)
+
+def gen_call_flat(compiler):
+    compiler.assign_dest_var()
+    compiler.call_args_flat()
+Instruction("CALL_FLAT", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_call_flat, has_side_effect=True)
+
 # Types data
 
-with open("./src/bc_data/types.txt", "w") as insn_type_f:
+with open("./lyra/bc_data/types.txt", "w") as insn_type_f:
 
     insn_type_defs = \
         "#pragma once\n" \
@@ -254,7 +295,7 @@ with open("./src/bc_data/types.txt", "w") as insn_type_f:
 
 # Codegen data
 
-with open("./src/bc_data/codegen.txt", "w") as insn_codegen_f:
+with open("./lyra/bc_data/codegen.txt", "w") as insn_codegen_f:
     insn_codegen_defs = """\
 #include <stdint.h>
 #include "../insn.h"

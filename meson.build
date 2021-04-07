@@ -13,5 +13,11 @@ sources = run_command(prog_python, [
     './build-scripts/meson_files.py'
 ]).stdout().split('\n')
 
-liblyra = static_library('lyra', sources,
-    include_directories: include_directories('./lyra'))
+if meson.is_subproject()
+    liblyra = static_library('lyra', sources,
+        include_directories: include_directories('./lyra'))
+else
+    executable('lyra-test',
+        sources,
+        include_directories: include_directories('./lyra'))
+endif
