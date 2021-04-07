@@ -3,6 +3,7 @@ ARG_TYPE_VAR = 1
 ARG_TYPE_I32 = 2
 ARG_TYPE_F64 = 2
 ARG_TYPE_BOOL = 3
+ARG_TYPE_CALL_ARGS = 4
 
 class Compiler:
     
@@ -237,12 +238,12 @@ Instruction("LOAD_ARG", ARG_TYPE_NONE, ARG_TYPE_I32, c_codegen=gen_load_arg)
 
 def gen_call(compiler):
     compiler.call_args()
-Instruction("CALL", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_call, has_side_effect=True)
+Instruction("CALL", ARG_TYPE_VAR, ARG_TYPE_CALL_ARGS, c_codegen=gen_call, has_side_effect=True)
 
 def gen_call_flat(compiler):
     compiler.assign_dest_var()
     compiler.call_args_flat()
-Instruction("CALL_FLAT", ARG_TYPE_VAR, ARG_TYPE_VAR, c_codegen=gen_call_flat, has_side_effect=True)
+Instruction("CALL_FLAT", ARG_TYPE_VAR, ARG_TYPE_CALL_ARGS, c_codegen=gen_call_flat, has_side_effect=True)
 
 # Types data
 

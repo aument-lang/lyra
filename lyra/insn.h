@@ -24,7 +24,7 @@ static inline struct lyra_insn_call_args *
 lyra_insn_call_args_new(size_t fn_idx, size_t length,
                         struct lyra_ctx *ctx) {
     struct lyra_insn_call_args *args = lyra_ctx_gc_malloc(
-        ctx, sizeof(struct lyra_insn_call_args) + length);
+        ctx, sizeof(struct lyra_insn_call_args) + length * sizeof(size_t));
     args->fn_idx = fn_idx;
     args->length = length;
     for (size_t i = 0; i < length; i++)
