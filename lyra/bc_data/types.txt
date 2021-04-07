@@ -6,11 +6,11 @@ LYRA_OP_MOV_I32,
 LYRA_OP_MOV_BOOL,
 LYRA_OP_MOV_F64,
 LYRA_OP_ENSURE_I32,
+LYRA_OP_ENSURE_I32_NUM,
 LYRA_OP_ENSURE_F64,
 LYRA_OP_ENSURE_F64_PRIM,
-LYRA_OP_ENSURE_NUM,
-LYRA_OP_ENSURE_I32_NUM,
 LYRA_OP_ENSURE_F64_NUM,
+LYRA_OP_ENSURE_NUM,
 LYRA_OP_ENSURE_VALUE_I32,
 LYRA_OP_ENSURE_VALUE_F64,
 LYRA_OP_ENSURE_VALUE_BOOL,
@@ -60,11 +60,11 @@ LYRA_OP_CALL_FLAT,
 static LYRA_ALWAYS_INLINE LYRA_UNUSED int lyra_insn_type_has_left_var(enum lyra_insn_type type) {
 if(type == LYRA_OP_MOV_VAR) return 1;
 if(type == LYRA_OP_ENSURE_I32) return 1;
+if(type == LYRA_OP_ENSURE_I32_NUM) return 1;
 if(type == LYRA_OP_ENSURE_F64) return 1;
 if(type == LYRA_OP_ENSURE_F64_PRIM) return 1;
-if(type == LYRA_OP_ENSURE_NUM) return 1;
-if(type == LYRA_OP_ENSURE_I32_NUM) return 1;
 if(type == LYRA_OP_ENSURE_F64_NUM) return 1;
+if(type == LYRA_OP_ENSURE_NUM) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_I32) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_F64) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_BOOL) return 1;
@@ -107,8 +107,6 @@ if(type == LYRA_OP_LEQ_NUM) return 1;
 if(type == LYRA_OP_GEQ_VAR) return 1;
 if(type == LYRA_OP_GEQ_PRIM) return 1;
 if(type == LYRA_OP_GEQ_NUM) return 1;
-if(type == LYRA_OP_CALL) return 1;
-if(type == LYRA_OP_CALL_FLAT) return 1;
 return 0;}
 static LYRA_ALWAYS_INLINE LYRA_UNUSED int lyra_insn_type_has_right_var(LYRA_UNUSED enum lyra_insn_type type) {
 if(type == LYRA_OP_MUL_VAR) return 1;
@@ -156,11 +154,11 @@ if(type == LYRA_OP_MOV_I32) return 1;
 if(type == LYRA_OP_MOV_BOOL) return 1;
 if(type == LYRA_OP_MOV_F64) return 1;
 if(type == LYRA_OP_ENSURE_I32) return 1;
+if(type == LYRA_OP_ENSURE_I32_NUM) return 1;
 if(type == LYRA_OP_ENSURE_F64) return 1;
 if(type == LYRA_OP_ENSURE_F64_PRIM) return 1;
-if(type == LYRA_OP_ENSURE_NUM) return 1;
-if(type == LYRA_OP_ENSURE_I32_NUM) return 1;
 if(type == LYRA_OP_ENSURE_F64_NUM) return 1;
+if(type == LYRA_OP_ENSURE_NUM) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_I32) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_F64) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_BOOL) return 1;

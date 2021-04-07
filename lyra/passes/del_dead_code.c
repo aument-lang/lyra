@@ -22,13 +22,17 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
     while (changed) {
         changed = 0;
         memset(used_vars, 0, LYRA_BA_LEN(shared->variables_len));
+
         for (struct lyra_insn *insn = block->insn_first; insn != 0;
              insn = insn->next) {
-            if (lyra_insn_type_has_left_var(insn->type))
+            if (lyra_insn_type_has_left_var(insn->type)) {
+                // printf("%d: mark %ld\n", insn->type, insn->left_var);
                 LYRA_BA_SET_BIT(used_vars, insn->left_var);
-            if (lyra_insn_type_has_right_var(insn->type))
+            }
+
+            if (lyra_insn_type_has_right_var(insn->type)) {
                 LYRA_BA_SET_BIT(used_vars, insn->right_operand.var);
-            else if (insn->type == LYRA_OP_CALL ||
+            } else if (insn->type == LYRA_OP_CALL ||
                      insn->type == LYRA_OP_CALL_FLAT) {
                 struct lyra_insn_call_args *args =
                     insn->right_operand.call_args;
@@ -39,12 +43,14 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
             }
         }
         for (size_t i = 0; i < shared->managed_vars_len; i++) {
-            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use, i))
+            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use, i)) {
                 LYRA_BA_SET_BIT(used_vars, i);
+            }
         }
         if (lyra_block_connector_type_has_var(block->connector.type)) {
             LYRA_BA_SET_BIT(used_vars, block->connector.var);
         }
+
         struct lyra_insn *insn = block->insn_first;
         while (insn != 0) {
             int has_dest_reg = lyra_insn_type_has_dest(insn->type);

@@ -215,12 +215,12 @@ Instruction("LOAD_ARG", ARG_TYPE_NONE, ARG_TYPE_I32, c_codegen=gen_load_arg)
 
 def gen_call(compiler):
     compiler.call_args()
-Instruction("CALL", ARG_TYPE_VAR, ARG_TYPE_CALL_ARGS, c_codegen=gen_call, has_side_effect=True)
+Instruction("CALL", ARG_TYPE_NONE, ARG_TYPE_CALL_ARGS, c_codegen=gen_call, has_side_effect=True)
 
 def gen_call_flat(compiler):
     compiler.assign_dest_var()
     compiler.call_args_flat()
-Instruction("CALL_FLAT", ARG_TYPE_VAR, ARG_TYPE_CALL_ARGS, c_codegen=gen_call_flat, has_side_effect=True)
+Instruction("CALL_FLAT", ARG_TYPE_NONE, ARG_TYPE_CALL_ARGS, c_codegen=gen_call_flat, has_side_effect=True)
 
 # Types data
 

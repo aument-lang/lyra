@@ -70,7 +70,13 @@ int lyra_pass_const_prop(struct lyra_block *block,
             };
             break;
         }
+        // mov var->var instructions
+        case LYRA_OP_MOV_VAR: {
+            constants[insn->dest_var] = constants[insn->left_var];
+            break;
+        }
         // Arithmetic
+        case LYRA_OP_ADD_VAR:
         case LYRA_OP_ADD_PRIM: {
             const struct lyra_value lhs = constants[insn->left_var];
             const struct lyra_value rhs =
