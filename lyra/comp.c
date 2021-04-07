@@ -12,6 +12,14 @@ void lyra_comp_init(struct lyra_comp *c, struct lyra_ctx *ctx) {
     c->ctx = ctx;
 }
 
+void lyra_comp_del(struct lyra_comp *c) {
+    lyra_ctx_mem_free(c->ctx, c->source.data);
+    c->source.data = 0;
+    c->source.len = 0;
+    c->source.cap = 0;
+    c->ctx = 0;
+}
+
 void lyra_comp_print_str(struct lyra_comp *c, const char *str) {
     while (*str != 0) {
         lyra_char_array_add(&c->source, *str, c->ctx);
