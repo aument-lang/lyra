@@ -12,25 +12,8 @@
 #include <stdlib.h>
 
 #include "bc_data/types.txt"
+#include "call_args.h"
 #include "context.h"
-
-struct lyra_insn_call_args {
-    size_t fn_idx;
-    size_t length;
-    size_t data[];
-};
-
-static inline struct lyra_insn_call_args *
-lyra_insn_call_args_new(size_t fn_idx, size_t length,
-                        struct lyra_ctx *ctx) {
-    struct lyra_insn_call_args *args = lyra_ctx_gc_malloc(
-        ctx, sizeof(struct lyra_insn_call_args) + length * sizeof(size_t));
-    args->fn_idx = fn_idx;
-    args->length = length;
-    for (size_t i = 0; i < length; i++)
-        args->data[i] = 0;
-    return args;
-}
 
 union lyra_insn_operand {
     int32_t i32;
