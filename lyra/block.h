@@ -24,6 +24,12 @@ lyra_block_connector_type_has_var(enum lyra_block_connector_type type) {
            type == LYRA_BLOCK_JNIF;
 }
 
+static inline int
+lyra_block_connector_type_is_jmp(enum lyra_block_connector_type type) {
+    return type == LYRA_BLOCK_JMP || type == LYRA_BLOCK_JIF ||
+           type == LYRA_BLOCK_JNIF;
+}
+
 struct lyra_block_connector {
     enum lyra_block_connector_type type;
     size_t var;

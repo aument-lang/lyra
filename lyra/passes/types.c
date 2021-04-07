@@ -74,10 +74,16 @@ static size_t generate_cast_to_any(struct lyra_insn *insn, size_t var,
     do {                                                                  \
         const size_t _var = (VAR);                                        \
         const enum lyra_value_type _type = (TYPE);                        \
-        if (shared->variable_types[_var] == LYRA_VALUE_UNTYPED)           \
+        if (shared->variable_types[_var] == LYRA_VALUE_UNTYPED) {         \
             shared->variable_types[_var] = _type;                         \
-        else if (shared->variable_types[_var] != _type)                   \
-            shared->variable_types[_var] = LYRA_VALUE_ANY;                \
+        } else if (shared->variable_types[_var] != _type) {               \
+            if (lyra_value_type_is_numeric(                               \
+                    shared->variable_types[_var])) {                      \
+                shared->variable_types[_var] = LYRA_VALUE_NUM;            \
+            } else {                                                      \
+                shared->variable_types[_var] = LYRA_VALUE_ANY;            \
+            }                                                             \
+        }                                                                 \
     } while (0)
 
 int lyra_pass_type_inference(struct lyra_block *block,
@@ -313,6 +319,45 @@ int lyra_pass_type_inference(struct lyra_block *block,
                 shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;
             }
         }
+        }
+    }
+    return 1;
+}
+
+int lyra_pass_promote_movs(struct lyra_block *block,
+                           struct lyra_function_shared *shared,
+                           struct lyra_ctx *ctx) {
+    (void)ctx;
+    for (struct lyra_insn *insn = block->insn_first; insn != 0;
+         insn = insn->next) {
+        if (insn->type == LYRA_OP_MOV_VAR) {
+            enum lyra_value_type dtype =
+                shared->variable_types[insn->dest_var];
+            enum lyra_value_type ltype =
+                shared->variable_types[insn->left_var];
+            switch (dtype) {
+            case LYRA_VALUE_NUM: {
+                switch (ltype) {
+                case LYRA_VALUE_I32: {
+                    insn->type = LYRA_OP_ENSURE_NUM_I32;
+                    break;
+                }
+                case LYRA_VALUE_F64: {
+                    insn->type = LYRA_OP_ENSURE_NUM_F64;
+                    break;
+                }
+                case LYRA_VALUE_NUM: {
+                    break;
+                }
+                default: {
+                    abort(); // TODO
+                }
+                }
+                break;
+            }
+            default:
+                break;
+            }
         }
     }
     return 1;

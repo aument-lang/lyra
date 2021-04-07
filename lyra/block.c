@@ -43,7 +43,6 @@ void lyra_block_connector_comp(const struct lyra_block_connector *conn,
         break;
     }
     case LYRA_BLOCK_JIF: {
-        assert(shared->variable_types[conn->var] == LYRA_VALUE_BOOL);
         lyra_comp_print_str(c, "if (v");
         lyra_comp_print_isize(c, conn->var);
         lyra_comp_print_str(c, ") goto L");
@@ -52,7 +51,6 @@ void lyra_block_connector_comp(const struct lyra_block_connector *conn,
         break;
     }
     case LYRA_BLOCK_JNIF: {
-        assert(shared->variable_types[conn->var] == LYRA_VALUE_BOOL);
         lyra_comp_print_str(c, "if(!v");
         lyra_comp_print_isize(c, conn->var);
         lyra_comp_print_str(c, ") goto L");

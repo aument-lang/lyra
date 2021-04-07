@@ -38,6 +38,17 @@ lyra_value_type_is_primitive_num(enum lyra_value_type type) {
     }
 }
 
+static inline int lyra_value_type_is_numeric(enum lyra_value_type type) {
+    switch (type) {
+    case LYRA_VALUE_I32:
+    case LYRA_VALUE_F64:
+    case LYRA_VALUE_NUM:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static inline const char *lyra_value_type_c(enum lyra_value_type type) {
     switch (type) {
     case LYRA_VALUE_ANY:

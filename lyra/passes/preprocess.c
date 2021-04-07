@@ -78,7 +78,7 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
         if (has_dest_reg) {
             if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
                                 insn->dest_var))
-                LYRA_BA_SET_BIT(shared->managed_vars_set, insn->dest_var);
+                continue;
             if (LYRA_BA_GET_BIT(shared->managed_vars_set,
                                 insn->dest_var)) {
                 enum lyra_value_type type =

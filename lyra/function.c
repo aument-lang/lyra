@@ -79,9 +79,11 @@ void lyra_function_comp(struct lyra_function *fn, struct lyra_comp *c) {
             lyra_insn_comp(insn, c);
             lyra_comp_print_str(c, "\n");
         }
-        lyra_comp_print_str(c, "  ");
-        lyra_block_connector_comp(&block->connector, &fn->shared, c);
-        lyra_comp_print_str(c, "\n");
+        if (block->connector.type != LYRA_BLOCK_FALLTHROUGH) {
+            lyra_comp_print_str(c, "  ");
+            lyra_block_connector_comp(&block->connector, &fn->shared, c);
+            lyra_comp_print_str(c, "\n");
+        }
     }
     lyra_comp_print_str(c, "}");
 }
