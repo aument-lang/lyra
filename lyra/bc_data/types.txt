@@ -13,6 +13,7 @@ LYRA_OP_ENSURE_F64_NUM,
 LYRA_OP_ENSURE_NUM,
 LYRA_OP_ENSURE_NUM_I32,
 LYRA_OP_ENSURE_NUM_F64,
+LYRA_OP_ENSURE_VALUE,
 LYRA_OP_ENSURE_VALUE_I32,
 LYRA_OP_ENSURE_VALUE_F64,
 LYRA_OP_ENSURE_VALUE_BOOL,
@@ -74,6 +75,7 @@ if(type == LYRA_OP_ENSURE_F64_NUM) return 1;
 if(type == LYRA_OP_ENSURE_NUM) return 1;
 if(type == LYRA_OP_ENSURE_NUM_I32) return 1;
 if(type == LYRA_OP_ENSURE_NUM_F64) return 1;
+if(type == LYRA_OP_ENSURE_VALUE) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_I32) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_F64) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_BOOL) return 1;
@@ -175,6 +177,7 @@ if(type == LYRA_OP_ENSURE_F64_NUM) return 1;
 if(type == LYRA_OP_ENSURE_NUM) return 1;
 if(type == LYRA_OP_ENSURE_NUM_I32) return 1;
 if(type == LYRA_OP_ENSURE_NUM_F64) return 1;
+if(type == LYRA_OP_ENSURE_VALUE) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_I32) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_F64) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_BOOL) return 1;

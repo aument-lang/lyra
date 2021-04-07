@@ -65,9 +65,9 @@ int main() {
 
     lyra_function_all_blocks(fn, lyra_pass_check_multiple_use);
     lyra_function_all_blocks(fn, lyra_pass_into_semi_ssa);
-    lyra_function_all_blocks(fn, lyra_pass_type_inference);
-    lyra_function_all_blocks(fn, lyra_pass_const_prop);
-    lyra_function_all_blocks(fn, lyra_pass_purge_dead_code);
+    lyra_function_all_blocks(fn, lyra_pass_partial_type_inference);
+    // lyra_function_all_blocks(fn, lyra_pass_const_prop);
+    // lyra_function_all_blocks(fn, lyra_pass_purge_dead_code);
     lyra_ctx_gc_run(&ctx);
 
     lyra_block_print(&fn->blocks.data[0]);

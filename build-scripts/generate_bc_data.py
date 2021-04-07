@@ -163,6 +163,7 @@ Instruction("ENSURE_NUM", ARG_TYPE_VAR, c_unary_func="au_num_from_value")
 Instruction("ENSURE_NUM_I32", ARG_TYPE_VAR, c_unary_func="au_num_from_i32")
 Instruction("ENSURE_NUM_F64", ARG_TYPE_VAR, c_unary_func="au_num_from_f64")
 
+Instruction("ENSURE_VALUE", ARG_TYPE_VAR, c_unary_func=r'\"this should not be called\"')
 Instruction("ENSURE_VALUE_I32", ARG_TYPE_VAR, c_unary_func="au_value_i32")
 Instruction("ENSURE_VALUE_F64", ARG_TYPE_VAR, c_unary_func="au_value_double")
 Instruction("ENSURE_VALUE_BOOL", ARG_TYPE_VAR, c_unary_func="au_value_bool")
