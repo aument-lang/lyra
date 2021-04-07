@@ -44,12 +44,12 @@ int lyra_pass_const_prop(struct lyra_block *block,
          insn = insn->next) {
         if (!lyra_insn_type_has_dest(insn->type))
             continue;
-        if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                            insn->dest_var))
-            continue;
         switch (insn->type) {
         // mov immediate instructions
         case LYRA_OP_MOV_I32: {
+            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
+                                insn->dest_var))
+                continue;
             constants[insn->dest_var] = (struct lyra_value){
                 .data.i32 = insn->right_operand.i32,
                 .type = LYRA_VALUE_I32,
@@ -57,6 +57,9 @@ int lyra_pass_const_prop(struct lyra_block *block,
             break;
         }
         case LYRA_OP_MOV_F64: {
+            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
+                                insn->dest_var))
+                continue;
             constants[insn->dest_var] = (struct lyra_value){
                 .data.f64 = insn->right_operand.f64,
                 .type = LYRA_VALUE_F64,
@@ -64,6 +67,9 @@ int lyra_pass_const_prop(struct lyra_block *block,
             break;
         }
         case LYRA_OP_MOV_BOOL: {
+            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
+                                insn->dest_var))
+                continue;
             constants[insn->dest_var] = (struct lyra_value){
                 .data.i32 = insn->right_operand.i32,
                 .type = LYRA_VALUE_BOOL,
@@ -72,12 +78,30 @@ int lyra_pass_const_prop(struct lyra_block *block,
         }
         // mov var->var instructions
         case LYRA_OP_MOV_VAR: {
+            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
+                                insn->dest_var))
+                continue;
             constants[insn->dest_var] = constants[insn->left_var];
+            break;
+        }
+        // Casting
+        case LYRA_OP_ENSURE_F64_PRIM: {
+            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
+                                insn->dest_var))
+                continue;
+            if(constants[insn->left_var].type == LYRA_VALUE_I32) {
+                constants[insn->dest_var] = (struct lyra_value){
+                    .data.f64 = (double)constants[insn->left_var].data.i32,
+                    .type = LYRA_VALUE_F64,
+                };
+            }
             break;
         }
         // Arithmetic
         case LYRA_OP_ADD_VAR:
-        case LYRA_OP_ADD_PRIM: {
+        case LYRA_OP_ADD_PRIM:
+        case LYRA_OP_ADD_NUM_I32:
+        case LYRA_OP_ADD_NUM_F64: {
             const struct lyra_value lhs = constants[insn->left_var];
             const struct lyra_value rhs =
                 constants[insn->right_operand.var];
@@ -107,8 +131,8 @@ int lyra_pass_const_prop(struct lyra_block *block,
             }
             break;
         }
-#define DEF_BIN_OP(NAME, OP)                                              \
-    case NAME##_PRIM: {                                                   \
+#define DEF_BIN_OP(OP)                                                    \
+    {                                                                     \
         const struct lyra_value lhs = constants[insn->left_var];          \
         const struct lyra_value rhs = constants[insn->right_operand.var]; \
         switch (lhs.type) {                                               \
@@ -137,9 +161,18 @@ int lyra_pass_const_prop(struct lyra_block *block,
         }                                                                 \
         break;                                                            \
     }
-            DEF_BIN_OP(LYRA_OP_SUB, -)
-            DEF_BIN_OP(LYRA_OP_MUL, *)
+        case LYRA_OP_SUB_VAR:
+        case LYRA_OP_SUB_PRIM:
+        case LYRA_OP_SUB_NUM_I32:
+        case LYRA_OP_SUB_NUM_F64:
+            DEF_BIN_OP(-)
+        case LYRA_OP_MUL_VAR:
+        case LYRA_OP_MUL_PRIM:
+        case LYRA_OP_MUL_NUM_I32:
+        case LYRA_OP_MUL_NUM_F64:
+            DEF_BIN_OP(*)
 #undef DEF_BIN_OP
+        case LYRA_OP_DIV_VAR:
         case LYRA_OP_DIV_PRIM: {
             const struct lyra_value lhs = constants[insn->left_var];
             const struct lyra_value rhs =
@@ -167,6 +200,16 @@ int lyra_pass_const_prop(struct lyra_block *block,
             }
             default:
                 break;
+            }
+            break;
+        }
+        case LYRA_OP_MOD_I32: {
+            const struct lyra_value lhs = constants[insn->left_var];
+            const struct lyra_value rhs =
+                constants[insn->right_operand.var];
+            if (lhs.type == LYRA_VALUE_I32 && rhs.type == LYRA_VALUE_I32) {
+                constants[insn->dest_var] = generate_const_i32_insn(
+                    insn, lhs.data.i32 % rhs.data.i32);
             }
             break;
         }
