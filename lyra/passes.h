@@ -13,6 +13,10 @@ int lyra_pass_check_multiple_use(struct lyra_block *block,
                                  struct lyra_function_shared *shared,
                                  struct lyra_ctx *ctx);
 
+int lyra_pass_check_multiple_set(struct lyra_block *block,
+                                 struct lyra_function_shared *shared,
+                                 struct lyra_ctx *ctx);
+
 int lyra_pass_into_semi_ssa(struct lyra_block *block,
                             struct lyra_function_shared *shared,
                             struct lyra_ctx *ctx);
@@ -28,3 +32,9 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
 int lyra_pass_partial_type_inference(struct lyra_block *block,
                                      struct lyra_function_shared *shared,
                                      struct lyra_ctx *ctx);
+
+int lyra_function_full_type_inference(struct lyra_function *fn);
+
+int lyra_pass_process_untyped_ops(struct lyra_block *block,
+                                  struct lyra_function_shared *shared,
+                                  struct lyra_ctx *ctx);

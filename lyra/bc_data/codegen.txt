@@ -75,6 +75,14 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
+if(insn->type == LYRA_OP_ENSURE_NUM_UNTYPED) {
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
+lyra_comp_print_str(c,"\"ensure number\"(");
+lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
+lyra_comp_print_str(c,")");
+lyra_comp_print_str(c,";");
+return;
+}
 if(insn->type == LYRA_OP_ENSURE_NUM_I32) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
 lyra_comp_print_str(c,"au_num_from_i32(");
@@ -91,9 +99,9 @@ lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");
 return;
 }
-if(insn->type == LYRA_OP_ENSURE_VALUE) {
+if(insn->type == LYRA_OP_ENSURE_VALUE_UNTYPED) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"\"this should not be called\"(");
+lyra_comp_print_str(c,"\"ensure value\"(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,")");
 lyra_comp_print_str(c,";");

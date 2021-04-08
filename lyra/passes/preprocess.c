@@ -46,6 +46,20 @@ int lyra_pass_check_multiple_use(struct lyra_block *block,
     return 1;
 }
 
+int lyra_pass_check_multiple_set(struct lyra_block *block,
+                                 struct lyra_function_shared *shared,
+                                 LYRA_UNUSED struct lyra_ctx *ctx) {
+    for (struct lyra_insn *insn = block->insn_first; insn != 0;
+         insn = insn->next) {
+        if (lyra_insn_type_has_dest(insn->type) &&
+            insn->dest_var < shared->managed_vars_len &&
+            LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
+                            insn->dest_var))
+            assert(insn->type == LYRA_OP_MOV_VAR);
+    }
+    return 1;
+}
+
 static inline size_t size_t_array_at(size_t *a, size_t n, size_t idx) {
     if (idx >= n)
         lyra_fatal_index(a, idx, n);

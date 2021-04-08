@@ -26,20 +26,25 @@ static size_t generate_cast(struct lyra_insn *insn, size_t var,
     return new_var;
 }
 
+static enum lyra_value_type unify_types(enum lyra_value_type dest,
+                                        enum lyra_value_type src) {
+    if (dest == LYRA_VALUE_UNTYPED)
+        return src;
+    if (lyra_value_type_is_numeric(dest) &&
+        lyra_value_type_is_numeric(src)) {
+        if (dest == src)
+            return dest;
+        else
+            return LYRA_VALUE_NUM;
+    }
+    return LYRA_VALUE_ANY;
+}
+
 #define SET_TYPE(VAR, TYPE)                                               \
     do {                                                                  \
         const size_t _var = (VAR);                                        \
-        const enum lyra_value_type _type = (TYPE);                        \
-        if (shared->variable_types[_var] == LYRA_VALUE_UNTYPED) {         \
-            shared->variable_types[_var] = _type;                         \
-        } else if (shared->variable_types[_var] != _type) {               \
-            if (lyra_value_type_is_numeric(                               \
-                    shared->variable_types[_var])) {                      \
-                shared->variable_types[_var] = LYRA_VALUE_NUM;            \
-            } else {                                                      \
-                shared->variable_types[_var] = LYRA_VALUE_ANY;            \
-            }                                                             \
-        }                                                                 \
+        shared->variable_types[_var] =                                    \
+            unify_types(shared->variable_types[_var], TYPE);              \
     } while (0)
 
 static size_t generate_cast_to_any(struct lyra_insn *insn, size_t var,
@@ -49,7 +54,7 @@ static size_t generate_cast_to_any(struct lyra_insn *insn, size_t var,
     enum lyra_insn_type cast_op;
     switch (shared->variable_types[var]) {
     case LYRA_VALUE_UNTYPED: {
-        cast_op = LYRA_OP_ENSURE_VALUE;
+        cast_op = LYRA_OP_ENSURE_VALUE_UNTYPED;
         break;
     }
     case LYRA_VALUE_ANY: {
@@ -145,14 +150,14 @@ int lyra_pass_partial_type_inference(struct lyra_block *block,
             size_t left = insn->left_var;                                 \
             insn->left_var = generate_cast(                               \
                 insn, insn->right_operand.var, LYRA_VALUE_NUM,            \
-                LYRA_OP_ENSURE_NUM, block, shared, ctx);                  \
+                LYRA_OP_ENSURE_NUM_UNTYPED, block, shared, ctx);          \
             insn->right_operand.var = left;                               \
         } else if (lyra_value_type_is_primitive_num(rtype)) {             \
             SET_TYPE(insn->dest_var, LYRA_VALUE_NUM);                     \
             insn->type = SELECT_NUM_BIN_OP(rtype, BASE_OP);               \
-            insn->left_var =                                              \
-                generate_cast(insn, insn->left_var, LYRA_VALUE_NUM,       \
-                              LYRA_OP_ENSURE_NUM, block, shared, ctx);    \
+            insn->left_var = generate_cast(                               \
+                insn, insn->left_var, LYRA_VALUE_NUM,                     \
+                LYRA_OP_ENSURE_NUM_UNTYPED, block, shared, ctx);          \
         } else {                                                          \
             shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;      \
         }                                                                 \
@@ -326,6 +331,117 @@ int lyra_pass_partial_type_inference(struct lyra_block *block,
                 shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;
             }
         }
+        }
+    }
+    return 1;
+}
+
+static int
+lyra_pass_full_type_inference(struct lyra_block *block,
+                              struct lyra_function_shared *shared,
+                              LYRA_UNUSED struct lyra_ctx *ctx) {
+    int changed = 0;
+    for (struct lyra_insn *insn = block->insn_first; insn != 0;
+         insn = insn->next) {
+        if (!lyra_insn_type_has_dest(insn->type))
+            continue;
+        switch (insn->type) {
+        case LYRA_OP_MOV_VAR: {
+            enum lyra_value_type old_type =
+                shared->variable_types[insn->dest_var];
+            shared->variable_types[insn->dest_var] = unify_types(
+                old_type, shared->variable_types[insn->left_var]);
+            if (shared->variable_types[insn->dest_var] != old_type) {
+                changed = 1;
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+    return changed;
+}
+
+int lyra_function_full_type_inference(struct lyra_function *fn) {
+    int changed = 1;
+    while (changed) {
+        changed = 0;
+        for (size_t i = 0; i < fn->blocks.len; i++)
+            if (lyra_pass_full_type_inference(&fn->blocks.data[i],
+                                              &fn->shared, fn->ctx))
+                changed = 1;
+    }
+    return 1;
+}
+
+int lyra_pass_process_untyped_ops(struct lyra_block *block,
+                                  struct lyra_function_shared *shared,
+                                  LYRA_UNUSED struct lyra_ctx *ctx) {
+    for (struct lyra_insn *insn = block->insn_first; insn != 0;
+         insn = insn->next) {
+        switch (insn->type) {
+        case LYRA_OP_MOV_VAR:
+        case LYRA_OP_ENSURE_VALUE_NUM:
+        case LYRA_OP_ENSURE_VALUE_I32:
+        case LYRA_OP_ENSURE_VALUE_F64:
+        case LYRA_OP_ENSURE_VALUE_UNTYPED:
+        case LYRA_OP_ENSURE_NUM_UNTYPED:
+        case LYRA_OP_ENSURE_NUM_I32:
+        case LYRA_OP_ENSURE_NUM_F64: {
+            switch (shared->variable_types[insn->dest_var]) {
+            case LYRA_VALUE_ANY: {
+                switch (shared->variable_types[insn->left_var]) {
+                case LYRA_VALUE_ANY: {
+                    insn->type = LYRA_OP_MOV_VAR;
+                    break;
+                }
+                case LYRA_VALUE_NUM: {
+                    insn->type = LYRA_OP_ENSURE_VALUE_NUM;
+                    break;
+                }
+                case LYRA_VALUE_I32: {
+                    insn->type = LYRA_OP_ENSURE_VALUE_I32;
+                    break;
+                }
+                case LYRA_VALUE_F64: {
+                    insn->type = LYRA_OP_ENSURE_VALUE_F64;
+                    break;
+                }
+                default:
+                    abort();
+                }
+                break;
+            }
+            case LYRA_VALUE_NUM: {
+                switch (shared->variable_types[insn->left_var]) {
+                case LYRA_VALUE_ANY: {
+                    insn->type = LYRA_OP_ENSURE_NUM;
+                    break;
+                }
+                case LYRA_VALUE_NUM: {
+                    insn->type = LYRA_OP_MOV_VAR;
+                    break;
+                }
+                case LYRA_VALUE_I32: {
+                    insn->type = LYRA_OP_ENSURE_NUM_I32;
+                    break;
+                }
+                case LYRA_VALUE_F64: {
+                    insn->type = LYRA_OP_ENSURE_NUM_F64;
+                    break;
+                }
+                default:
+                    abort();
+                }
+                break;
+            }
+            default:
+                break;
+            }
+        }
+        default:
+            break;
         }
     }
     return 1;
