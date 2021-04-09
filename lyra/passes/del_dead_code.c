@@ -26,7 +26,6 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
         for (struct lyra_insn *insn = block->insn_first; insn != 0;
              insn = insn->next) {
             if (lyra_insn_type_has_left_var(insn->type)) {
-                // printf("%d: mark %ld\n", insn->type, insn->left_var);
                 LYRA_BA_SET_BIT(used_vars, insn->left_var);
             }
 

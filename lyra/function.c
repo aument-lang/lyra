@@ -45,7 +45,11 @@ size_t lyra_function_add_variable(struct lyra_function *fn,
     return lyra_function_shared_add_variable(&fn->shared, type, fn->ctx);
 }
 
-void lyra_function_finalize(struct lyra_function *fn) {
+void lyra_function_reset_managed_vars(struct lyra_function *fn) {
+    if (fn->shared.managed_vars_len != 0) {
+        lyra_ctx_mem_free(fn->ctx, fn->shared.managed_vars_set);
+        lyra_ctx_mem_free(fn->ctx, fn->shared.managed_vars_multiple_use);
+    }
     fn->shared.managed_vars_set = lyra_ctx_mem_calloc(
         fn->ctx, LYRA_BA_LEN(fn->shared.variables_len), 1);
     fn->shared.managed_vars_multiple_use = lyra_ctx_mem_calloc(

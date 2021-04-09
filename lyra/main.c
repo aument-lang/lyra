@@ -61,7 +61,7 @@ int main() {
         lyra_function_add_block(fn, block);
     }
 
-    lyra_function_finalize(fn);
+    lyra_function_reset_managed_vars(fn);
 
     lyra_function_all_blocks(fn, lyra_pass_check_multiple_use);
     lyra_function_all_blocks(fn, lyra_pass_into_semi_ssa);

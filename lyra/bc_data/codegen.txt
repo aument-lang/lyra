@@ -361,7 +361,7 @@ return;
 }
 if(insn->type == LYRA_OP_EQ_VAR) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_value_eq(");
+lyra_comp_print_str(c,"au_value_eq_b(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
@@ -389,7 +389,7 @@ return;
 }
 if(insn->type == LYRA_OP_NEQ_VAR) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_value_neq(");
+lyra_comp_print_str(c,"au_value_neq_b(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
@@ -417,7 +417,7 @@ return;
 }
 if(insn->type == LYRA_OP_LT_VAR) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_value_lt(");
+lyra_comp_print_str(c,"au_value_lt_b(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
@@ -445,7 +445,7 @@ return;
 }
 if(insn->type == LYRA_OP_GT_VAR) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_value_gt(");
+lyra_comp_print_str(c,"au_value_gt_b(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
@@ -473,7 +473,7 @@ return;
 }
 if(insn->type == LYRA_OP_LEQ_VAR) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_value_leq(");
+lyra_comp_print_str(c,"au_value_leq_b(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);
@@ -501,7 +501,7 @@ return;
 }
 if(insn->type == LYRA_OP_GEQ_VAR) {
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->dest_var);lyra_comp_print_str(c,"=");
-lyra_comp_print_str(c,"au_value_geq(");
+lyra_comp_print_str(c,"au_value_geq_b(");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->left_var);
 lyra_comp_print_str(c,",");
 lyra_comp_print_str(c,"v");lyra_comp_print_isize(c,insn->right_operand.var);

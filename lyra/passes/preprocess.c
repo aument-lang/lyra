@@ -20,13 +20,14 @@ int lyra_pass_check_multiple_use(struct lyra_block *block,
         calloc(LYRA_BA_LEN(shared->managed_vars_len), 1);
     lyra_bit_array used_vars =
         calloc(LYRA_BA_LEN(shared->managed_vars_len), 1);
-    memset(shared->managed_vars_multiple_use, 0,
-           LYRA_BA_LEN(shared->managed_vars_len));
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
-        if (lyra_insn_type_has_dest(insn->type))
+        if (lyra_insn_type_has_dest(insn->type)) {
+            assert(insn->dest_var < shared->managed_vars_len);
             LYRA_BA_SET_BIT(owned_vars, insn->dest_var);
+        }
         if (lyra_insn_type_has_left_var(insn->type)) {
+            assert(insn->left_var < shared->managed_vars_len);
             if (!LYRA_BA_GET_BIT(owned_vars, insn->left_var)) {
                 LYRA_BA_SET_BIT(shared->managed_vars_multiple_use,
                                 insn->left_var);
@@ -34,6 +35,7 @@ int lyra_pass_check_multiple_use(struct lyra_block *block,
             LYRA_BA_SET_BIT(used_vars, insn->left_var);
         }
         if (lyra_insn_type_has_right_var(insn->type)) {
+            assert(insn->right_operand.var < shared->managed_vars_len);
             if (!LYRA_BA_GET_BIT(owned_vars, insn->right_operand.var)) {
                 LYRA_BA_SET_BIT(shared->managed_vars_multiple_use,
                                 insn->right_operand.var);
@@ -52,9 +54,8 @@ int lyra_pass_check_multiple_set(struct lyra_block *block,
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
         if (lyra_insn_type_has_dest(insn->type) &&
-            insn->dest_var < shared->managed_vars_len &&
-            LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                            insn->dest_var))
+            lyra_function_shared_is_var_multiple_use(shared,
+                                                     insn->dest_var))
             assert(insn->type == LYRA_OP_MOV_VAR);
     }
     return 1;
@@ -94,8 +95,8 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
                     insn->right_operand.call_args->data[i]);
         }
         if (has_dest_reg) {
-            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                                insn->dest_var))
+            if (lyra_function_shared_is_var_multiple_use(shared,
+                                                         insn->dest_var))
                 continue;
             if (LYRA_BA_GET_BIT(shared->managed_vars_set,
                                 insn->dest_var)) {

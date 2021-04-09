@@ -16,7 +16,9 @@ struct lyra_function_shared {
     lyra_bit_array used_vars;
     /// Bit array of already set variables
     lyra_bit_array managed_vars_set;
-    /// Bit array of variables that are used in multiple blocks
+    /// Bit array of variables that are used in multiple blocks.
+    /// Do NOT access this variable directly
+    /// (use lyra_function_shared_is_var_multiple_use)
     lyra_bit_array managed_vars_multiple_use;
     size_t managed_vars_len;
 };
@@ -25,6 +27,12 @@ size_t
 lyra_function_shared_add_variable(struct lyra_function_shared *shared,
                                   enum lyra_value_type type,
                                   struct lyra_ctx *ctx);
+
+static inline int lyra_function_shared_is_var_multiple_use(
+    const struct lyra_function_shared *shared, size_t var) {
+    return var < shared->managed_vars_len &&
+           LYRA_BA_GET_BIT(shared->managed_vars_multiple_use, var);
+}
 
 struct lyra_function {
     struct lyra_block_array blocks;
@@ -43,7 +51,7 @@ size_t lyra_function_add_block(struct lyra_function *fn,
 size_t lyra_function_add_variable(struct lyra_function *fn,
                                   enum lyra_value_type type);
 
-void lyra_function_finalize(struct lyra_function *fn);
+void lyra_function_reset_managed_vars(struct lyra_function *fn);
 
 struct lyra_comp;
 void lyra_function_comp(struct lyra_function *fn, struct lyra_comp *c);

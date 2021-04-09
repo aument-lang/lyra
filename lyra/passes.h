@@ -35,6 +35,10 @@ int lyra_pass_partial_type_inference(struct lyra_block *block,
 
 int lyra_function_full_type_inference(struct lyra_function *fn);
 
-int lyra_pass_process_untyped_ops(struct lyra_block *block,
-                                  struct lyra_function_shared *shared,
-                                  struct lyra_ctx *ctx);
+int lyra_pass_correct_var_movs(struct lyra_block *block,
+                               struct lyra_function_shared *shared,
+                               struct lyra_ctx *ctx);
+
+int lyra_pass_remove_indirection(struct lyra_block *block,
+                                 struct lyra_function_shared *shared,
+                                 struct lyra_ctx *ctx);

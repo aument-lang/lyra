@@ -12,6 +12,16 @@
 #include "function.h"
 #include "platform.h"
 
+static struct lyra_value generate_const_bool_insn(struct lyra_insn *insn,
+                                                  int32_t value) {
+    insn->type = LYRA_OP_MOV_I32;
+    insn->right_operand.i32 = value;
+    return (struct lyra_value){
+        .type = LYRA_VALUE_BOOL,
+        .data.i32 = value,
+    };
+}
+
 static struct lyra_value generate_const_i32_insn(struct lyra_insn *insn,
                                                  int32_t value) {
     insn->type = LYRA_OP_MOV_I32;
@@ -32,6 +42,24 @@ static struct lyra_value generate_const_f64_insn(struct lyra_insn *insn,
     };
 }
 
+static int into_const_mov(struct lyra_insn *insn,
+                          struct lyra_value value) {
+    switch (value.type) {
+    case LYRA_VALUE_I32: {
+        insn->type = LYRA_OP_MOV_I32;
+        insn->right_operand = LYRA_INSN_I32(value.data.i32);
+        return 1;
+    }
+    case LYRA_VALUE_F64: {
+        insn->type = LYRA_OP_MOV_F64;
+        insn->right_operand = LYRA_INSN_F64(value.data.f64);
+        return 1;
+    }
+    default:
+        return 0;
+    }
+}
+
 int lyra_pass_const_prop(struct lyra_block *block,
                          struct lyra_function_shared *shared,
                          LYRA_UNUSED struct lyra_ctx *ctx) {
@@ -47,47 +75,45 @@ int lyra_pass_const_prop(struct lyra_block *block,
         switch (insn->type) {
         // mov immediate instructions
         case LYRA_OP_MOV_I32: {
-            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                                insn->dest_var))
+            if (lyra_function_shared_is_var_multiple_use(shared,
+                                                         insn->dest_var))
                 continue;
-            constants[insn->dest_var] = (struct lyra_value){
-                .data.i32 = insn->right_operand.i32,
-                .type = LYRA_VALUE_I32,
-            };
+            constants[insn->dest_var] =
+                generate_const_i32_insn(insn, insn->right_operand.i32);
             break;
         }
         case LYRA_OP_MOV_F64: {
-            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                                insn->dest_var))
+            if (lyra_function_shared_is_var_multiple_use(shared,
+                                                         insn->dest_var))
                 continue;
-            constants[insn->dest_var] = (struct lyra_value){
-                .data.f64 = insn->right_operand.f64,
-                .type = LYRA_VALUE_F64,
-            };
+            constants[insn->dest_var] =
+                generate_const_f64_insn(insn, insn->right_operand.f64);
             break;
         }
         case LYRA_OP_MOV_BOOL: {
-            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                                insn->dest_var))
+            if (lyra_function_shared_is_var_multiple_use(shared,
+                                                         insn->dest_var))
                 continue;
-            constants[insn->dest_var] = (struct lyra_value){
-                .data.i32 = insn->right_operand.i32,
-                .type = LYRA_VALUE_BOOL,
-            };
+            constants[insn->dest_var] =
+                generate_const_bool_insn(insn, insn->right_operand.i32);
             break;
         }
         // mov var->var instructions
         case LYRA_OP_MOV_VAR: {
-            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                                insn->dest_var))
+            if (into_const_mov(insn, constants[insn->left_var])) {
+                constants[insn->dest_var] = constants[insn->left_var];
+                continue;
+            }
+            if (lyra_function_shared_is_var_multiple_use(shared,
+                                                         insn->dest_var))
                 continue;
             constants[insn->dest_var] = constants[insn->left_var];
             break;
         }
         // Casting
         case LYRA_OP_ENSURE_F64_PRIM: {
-            if (LYRA_BA_GET_BIT(shared->managed_vars_multiple_use,
-                                insn->dest_var))
+            if (lyra_function_shared_is_var_multiple_use(shared,
+                                                         insn->dest_var))
                 continue;
             if (constants[insn->left_var].type == LYRA_VALUE_I32) {
                 constants[insn->dest_var] = (struct lyra_value){

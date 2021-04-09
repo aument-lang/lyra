@@ -207,12 +207,12 @@ for (op, c_bin_op) in [
 # Comparison operations
 
 for (op, c_bin_func, c_bin_op, num_func) in [
-    ("EQ" , "au_value_eq", "==", "au_num_eq"),
-    ("NEQ", "au_value_neq", "!=", "au_num_neq"),
-    ("LT" , "au_value_lt", "<", "au_num_lt"),
-    ("GT" , "au_value_gt", ">", "au_num_gt"),
-    ("LEQ", "au_value_leq", "<=", "au_num_leq"),
-    ("GEQ", "au_value_geq", ">=", "au_num_geq"),
+    ("EQ" , "au_value_eq_b", "==", "au_num_eq"),
+    ("NEQ", "au_value_neq_b", "!=", "au_num_neq"),
+    ("LT" , "au_value_lt_b", "<", "au_num_lt"),
+    ("GT" , "au_value_gt_b", ">", "au_num_gt"),
+    ("LEQ", "au_value_leq_b", "<=", "au_num_leq"),
+    ("GEQ", "au_value_geq_b", ">=", "au_num_geq"),
 ]:
     Instruction(op + "_VAR", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=c_bin_func)
     Instruction(op + "_PRIM", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_op=c_bin_op)
