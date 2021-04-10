@@ -14,6 +14,7 @@ enum lyra_value_type {
     LYRA_VALUE_F64,
     LYRA_VALUE_BOOL,
     LYRA_VALUE_NUM,
+    LYRA_VALUE_STR,
 };
 
 static inline int lyra_value_type_is_primitive(enum lyra_value_type type) {
@@ -60,6 +61,8 @@ static inline const char *lyra_value_type_c(enum lyra_value_type type) {
         return "double";
     case LYRA_VALUE_NUM:
         return "au_num_t";
+    case LYRA_VALUE_STR:
+        return "au_string_ptr";
     default:
         return 0;
     }
@@ -79,14 +82,18 @@ lyra_value_type_to_any_fn(enum lyra_value_type type) {
         return "au_value_double";
     case LYRA_VALUE_NUM:
         return "au_num_to_value";
+    case LYRA_VALUE_STR:
+        return "au_value_string";
     }
     return 0;
 }
 
+struct lyra_string;
 struct lyra_value {
     union {
         int32_t i32;
         double f64;
+        struct lyra_string *str;
     } data;
     enum lyra_value_type type;
 };

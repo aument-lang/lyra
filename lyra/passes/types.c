@@ -30,13 +30,11 @@ static enum lyra_value_type unify_types(enum lyra_value_type dest,
                                         enum lyra_value_type src) {
     if (dest == LYRA_VALUE_UNTYPED)
         return src;
+    if (dest == src)
+        return dest;
     if (lyra_value_type_is_numeric(dest) &&
-        lyra_value_type_is_numeric(src)) {
-        if (dest == src)
-            return dest;
-        else
-            return LYRA_VALUE_NUM;
-    }
+        lyra_value_type_is_numeric(src))
+        return LYRA_VALUE_NUM;
     return LYRA_VALUE_ANY;
 }
 
@@ -74,6 +72,10 @@ static size_t generate_cast_to_any(struct lyra_insn *insn, size_t var,
     }
     case LYRA_VALUE_NUM: {
         cast_op = LYRA_OP_ENSURE_VALUE_NUM;
+        break;
+    }
+    case LYRA_VALUE_STR: {
+        cast_op = LYRA_OP_ENSURE_VALUE_STR;
         break;
     }
     }
@@ -122,6 +124,11 @@ int lyra_pass_partial_type_inference(struct lyra_block *block,
         case LYRA_OP_MOV_F64:
         case LYRA_OP_ENSURE_F64: {
             SET_TYPE(insn->dest_var, LYRA_VALUE_F64);
+            break;
+        }
+        // Operations that only return string
+        case LYRA_OP_MOV_STR: {
+            SET_TYPE(insn->dest_var, LYRA_VALUE_STR);
             break;
         }
         // mov var to var operation
@@ -173,7 +180,37 @@ int lyra_pass_partial_type_inference(struct lyra_block *block,
         case LYRA_OP_ADD_PRIM:
         case LYRA_OP_ADD_NUM_I32:
         case LYRA_OP_ADD_NUM_F64:
+        case LYRA_OP_ADD_STR: {
+            {
+                enum lyra_value_type ltype =
+                    shared->variable_types[insn->left_var];
+                enum lyra_value_type rtype =
+                    shared->variable_types[insn->right_operand.var];
+                if (ltype == LYRA_VALUE_STR && rtype == LYRA_VALUE_STR) {
+                    shared->variable_types[insn->dest_var] =
+                        LYRA_VALUE_STR;
+                    insn->type = LYRA_OP_ADD_STR;
+                    break;
+                } else if (ltype == LYRA_VALUE_STR) {
+                    shared->variable_types[insn->dest_var] =
+                        LYRA_VALUE_STR;
+                    insn->type = LYRA_OP_ADD_STR;
+                    insn->left_var = generate_cast(
+                        insn, insn->left_var, LYRA_VALUE_STR,
+                        LYRA_OP_ENSURE_VALUE_STR, block, shared, ctx);
+                    break;
+                } else if (rtype == LYRA_VALUE_STR) {
+                    shared->variable_types[insn->dest_var] =
+                        LYRA_VALUE_STR;
+                    insn->type = LYRA_OP_ADD_STR;
+                    insn->right_operand.var = generate_cast(
+                        insn, insn->right_operand.var, LYRA_VALUE_STR,
+                        LYRA_OP_ENSURE_VALUE_STR, block, shared, ctx);
+                    break;
+                }
+            }
             BIN_OP(LYRA_OP_ADD)
+        }
         case LYRA_OP_SUB_VAR:
         case LYRA_OP_SUB_PRIM:
         case LYRA_OP_SUB_NUM_I32:
@@ -473,6 +510,10 @@ int lyra_pass_correct_var_movs(struct lyra_block *block,
                 }
                 case LYRA_VALUE_F64: {
                     insn->type = LYRA_OP_ENSURE_VALUE_F64;
+                    break;
+                }
+                case LYRA_VALUE_STR: {
+                    insn->type = LYRA_OP_ENSURE_VALUE_STR;
                     break;
                 }
                 }

@@ -14,6 +14,7 @@
 #include "bc_data/types.txt"
 #include "call_args.h"
 #include "context.h"
+#include "lyra_string.h"
 
 union lyra_insn_operand {
     int32_t i32;

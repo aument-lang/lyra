@@ -42,6 +42,16 @@ static struct lyra_value generate_const_f64_insn(struct lyra_insn *insn,
     };
 }
 
+static struct lyra_value generate_const_str_insn(struct lyra_insn *insn,
+                                                 struct lyra_string *str) {
+    insn->type = LYRA_OP_MOV_STR;
+    insn->right_operand.str = str;
+    return (struct lyra_value){
+        .type = LYRA_VALUE_STR,
+        .data.str = str,
+    };
+}
+
 static int into_const_mov(struct lyra_insn *insn,
                           struct lyra_value value) {
     switch (value.type) {
@@ -98,6 +108,14 @@ int lyra_pass_const_prop(struct lyra_block *block,
                 generate_const_bool_insn(insn, insn->right_operand.i32);
             break;
         }
+        case LYRA_OP_MOV_STR: {
+            if (lyra_function_shared_is_var_multiple_use(shared,
+                                                         insn->dest_var))
+                continue;
+            constants[insn->dest_var] =
+                generate_const_str_insn(insn, insn->right_operand.str);
+            break;
+        }
         // mov var->var instructions
         case LYRA_OP_MOV_VAR: {
             if (into_const_mov(insn, constants[insn->left_var])) {
@@ -125,6 +143,7 @@ int lyra_pass_const_prop(struct lyra_block *block,
         }
         // Arithmetic
         case LYRA_OP_ADD_VAR:
+        case LYRA_OP_ADD_STR:
         case LYRA_OP_ADD_PRIM:
         case LYRA_OP_ADD_NUM_I32:
         case LYRA_OP_ADD_NUM_F64: {
@@ -149,6 +168,14 @@ int lyra_pass_const_prop(struct lyra_block *block,
                 } else if (rhs.type == LYRA_VALUE_F64) {
                     constants[insn->dest_var] = generate_const_f64_insn(
                         insn, lhs.data.f64 + rhs.data.f64);
+                }
+                break;
+            }
+            case LYRA_VALUE_STR: {
+                if (rhs.type == LYRA_VALUE_STR) {
+                    constants[insn->dest_var] = generate_const_str_insn(
+                        insn,
+                        lyra_string_add(ctx, lhs.data.str, rhs.data.str));
                 }
                 break;
             }

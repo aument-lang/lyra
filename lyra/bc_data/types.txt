@@ -5,6 +5,7 @@ LYRA_OP_MOV_VAR,
 LYRA_OP_MOV_I32,
 LYRA_OP_MOV_BOOL,
 LYRA_OP_MOV_F64,
+LYRA_OP_MOV_STR,
 LYRA_OP_ENSURE_I32,
 LYRA_OP_ENSURE_I32_NUM,
 LYRA_OP_ENSURE_F64,
@@ -19,6 +20,7 @@ LYRA_OP_ENSURE_VALUE_I32,
 LYRA_OP_ENSURE_VALUE_F64,
 LYRA_OP_ENSURE_VALUE_BOOL,
 LYRA_OP_ENSURE_VALUE_NUM,
+LYRA_OP_ENSURE_VALUE_STR,
 LYRA_OP_NOT_VAR,
 LYRA_OP_NOT_PRIM,
 LYRA_OP_NEG_VAR,
@@ -38,6 +40,7 @@ LYRA_OP_SUB_VAR,
 LYRA_OP_SUB_PRIM,
 LYRA_OP_SUB_NUM_I32,
 LYRA_OP_SUB_NUM_F64,
+LYRA_OP_ADD_STR,
 LYRA_OP_BOR_I32,
 LYRA_OP_BXOR_I32,
 LYRA_OP_BAND_I32,
@@ -81,6 +84,7 @@ if(type == LYRA_OP_ENSURE_VALUE_I32) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_F64) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_BOOL) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_NUM) return 1;
+if(type == LYRA_OP_ENSURE_VALUE_STR) return 1;
 if(type == LYRA_OP_NOT_VAR) return 1;
 if(type == LYRA_OP_NOT_PRIM) return 1;
 if(type == LYRA_OP_NEG_VAR) return 1;
@@ -100,6 +104,7 @@ if(type == LYRA_OP_SUB_VAR) return 1;
 if(type == LYRA_OP_SUB_PRIM) return 1;
 if(type == LYRA_OP_SUB_NUM_I32) return 1;
 if(type == LYRA_OP_SUB_NUM_F64) return 1;
+if(type == LYRA_OP_ADD_STR) return 1;
 if(type == LYRA_OP_BOR_I32) return 1;
 if(type == LYRA_OP_BXOR_I32) return 1;
 if(type == LYRA_OP_BAND_I32) return 1;
@@ -140,6 +145,7 @@ if(type == LYRA_OP_SUB_VAR) return 1;
 if(type == LYRA_OP_SUB_PRIM) return 1;
 if(type == LYRA_OP_SUB_NUM_I32) return 1;
 if(type == LYRA_OP_SUB_NUM_F64) return 1;
+if(type == LYRA_OP_ADD_STR) return 1;
 if(type == LYRA_OP_BOR_I32) return 1;
 if(type == LYRA_OP_BXOR_I32) return 1;
 if(type == LYRA_OP_BAND_I32) return 1;
@@ -170,6 +176,7 @@ if(type == LYRA_OP_MOV_VAR) return 1;
 if(type == LYRA_OP_MOV_I32) return 1;
 if(type == LYRA_OP_MOV_BOOL) return 1;
 if(type == LYRA_OP_MOV_F64) return 1;
+if(type == LYRA_OP_MOV_STR) return 1;
 if(type == LYRA_OP_ENSURE_I32) return 1;
 if(type == LYRA_OP_ENSURE_I32_NUM) return 1;
 if(type == LYRA_OP_ENSURE_F64) return 1;
@@ -184,6 +191,7 @@ if(type == LYRA_OP_ENSURE_VALUE_I32) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_F64) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_BOOL) return 1;
 if(type == LYRA_OP_ENSURE_VALUE_NUM) return 1;
+if(type == LYRA_OP_ENSURE_VALUE_STR) return 1;
 if(type == LYRA_OP_NOT_VAR) return 1;
 if(type == LYRA_OP_NOT_PRIM) return 1;
 if(type == LYRA_OP_NEG_VAR) return 1;
@@ -203,6 +211,7 @@ if(type == LYRA_OP_SUB_VAR) return 1;
 if(type == LYRA_OP_SUB_PRIM) return 1;
 if(type == LYRA_OP_SUB_NUM_I32) return 1;
 if(type == LYRA_OP_SUB_NUM_F64) return 1;
+if(type == LYRA_OP_ADD_STR) return 1;
 if(type == LYRA_OP_BOR_I32) return 1;
 if(type == LYRA_OP_BXOR_I32) return 1;
 if(type == LYRA_OP_BAND_I32) return 1;

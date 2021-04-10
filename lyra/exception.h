@@ -3,6 +3,8 @@
 //
 // Licensed under Apache License v2.0
 // See LICENSE.txt for license information
+#pragma once
+
 #include <stdio.h>
 #include <stdlib.h>
 

@@ -4,6 +4,7 @@ ARG_TYPE_I32 = 2
 ARG_TYPE_F64 = 2
 ARG_TYPE_BOOL = 3
 ARG_TYPE_CALL_ARGS = 4
+ARG_TYPE_STR = 5
 
 class Compiler:
     
@@ -28,6 +29,18 @@ class Compiler:
 
     def right_f64(self):
         self.c_source += 'lyra_comp_print_f64(c,insn->right_operand.f64);\n'
+
+    def right_str(self):
+        self.c_source += '''\
+lyra_comp_print_str(c,"au_string_from_const((char[]){");
+for(size_t i = 0;i<insn->right_operand.str->len; i++) {
+    lyra_comp_print_i32(c,(int32_t)insn->right_operand.str->data[i]);
+    lyra_comp_print_str(c,",");
+}
+lyra_comp_print_str(c,"},");
+lyra_comp_print_isize(c,insn->right_operand.str->len);
+lyra_comp_print_str(c,")");\
+'''
 
     def raw(self, string):
         self.c_source += f'lyra_comp_print_str(c,"{string}");\n'
@@ -119,6 +132,11 @@ def gen_mov_f64(compiler):
     compiler.right_f64()
 Instruction("MOV_F64", ARG_TYPE_NONE, ARG_TYPE_F64, c_codegen=gen_mov_f64)
 
+def gen_mov_str(compiler):
+    compiler.assign_dest_var()
+    compiler.right_str()
+Instruction("MOV_STR", ARG_TYPE_NONE, ARG_TYPE_STR, c_codegen=gen_mov_str)
+
 # Value assertion
 
 Instruction("ENSURE_I32", ARG_TYPE_VAR, c_unary_func="au_value_get_int")
@@ -138,6 +156,7 @@ Instruction("ENSURE_VALUE_I32", ARG_TYPE_VAR, c_unary_func="au_value_i32")
 Instruction("ENSURE_VALUE_F64", ARG_TYPE_VAR, c_unary_func="au_value_double")
 Instruction("ENSURE_VALUE_BOOL", ARG_TYPE_VAR, c_unary_func="au_value_bool")
 Instruction("ENSURE_VALUE_NUM", ARG_TYPE_VAR, c_unary_func="au_num_into_value")
+Instruction("ENSURE_VALUE_STR", ARG_TYPE_VAR, c_unary_func="au_value_string")
 
 # Unary operations
 
@@ -162,6 +181,8 @@ for (op, c_bin_func, c_bin_op, num_func) in [
     if num_func:
         Instruction(op + "_NUM_I32", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=num_func + "_i32")
         Instruction(op + "_NUM_F64", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func=num_func + "_f64")
+
+Instruction("ADD_STR", ARG_TYPE_VAR, ARG_TYPE_VAR, c_bin_func="au_string_add")
 
 for (op, c_bin_op) in [
     ("BOR", "|"),
