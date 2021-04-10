@@ -367,9 +367,7 @@ int lyra_pass_partial_type_inference(struct lyra_block *block,
             break;
         }
         // Call instructions
-        case LYRA_OP_CALL:
-        case LYRA_OP_CALL_FLAT: {
-            shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;
+        case LYRA_OP_CALL: {
             struct lyra_insn_call_args *args =
                 insn->right_operand.call_args;
             for (size_t i = 0; i < args->length; i++) {
@@ -379,7 +377,8 @@ int lyra_pass_partial_type_inference(struct lyra_block *block,
                         insn, args->data[i], block, shared, ctx);
                 }
             }
-            shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;
+            if (lyra_insn_call_args_has_return(args))
+                shared->variable_types[insn->dest_var] = LYRA_VALUE_ANY;
             break;
         }
         // Other

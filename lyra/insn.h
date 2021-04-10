@@ -20,12 +20,14 @@ union lyra_insn_operand {
     double f64;
     size_t var;
     struct lyra_insn_call_args *call_args;
+    struct lyra_string *str;
 };
 
 #define LYRA_INSN_I32(X) ((union lyra_insn_operand){.i32 = (X)})
 #define LYRA_INSN_BOOL(X) ((union lyra_insn_operand){.i32 = (X)})
 #define LYRA_INSN_F64(X) ((union lyra_insn_operand){.f64 = (X)})
 #define LYRA_INSN_REG(X) ((union lyra_insn_operand){.var = (X)})
+#define LYRA_INSN_STR(X) ((union lyra_insn_operand){.str = (X)})
 #define LYRA_INSN_CALL_ARGS(X)                                            \
     ((union lyra_insn_operand){.call_args = (X)})
 

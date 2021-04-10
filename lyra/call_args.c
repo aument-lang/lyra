@@ -13,6 +13,7 @@ lyra_insn_call_args_new_idx(size_t idx, size_t length,
         ctx, sizeof(struct lyra_insn_call_args) + length * sizeof(size_t));
     args->name_type = LYRA_INSN_CALL_ARGS_IDX;
     args->name.idx = idx;
+    args->flags = 0;
     args->length = length;
     for (size_t i = 0; i < length; i++)
         args->data[i] = 0;
@@ -26,6 +27,7 @@ lyra_insn_call_args_new_name(const char *name, size_t length,
         ctx, sizeof(struct lyra_insn_call_args) + length * sizeof(size_t));
     args->name_type = LYRA_INSN_CALL_ARGS_STRING;
     args->name.string = name;
+    args->flags = 0;
     args->length = length;
     for (size_t i = 0; i < length; i++)
         args->data[i] = 0;

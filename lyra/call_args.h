@@ -13,6 +13,9 @@
 #include "bc_data/types.txt"
 #include "context.h"
 
+#define LYRA_INSN_CALL_NO_RET_FLAG (1 << 0)
+#define LYRA_INSN_CALL_FLAT_ARGS_FLAG (1 << 1)
+
 struct lyra_insn_call_args {
     enum {
         LYRA_INSN_CALL_ARGS_IDX,
@@ -22,9 +25,15 @@ struct lyra_insn_call_args {
         size_t idx;
         const char *string;
     } name;
+    uint32_t flags;
     size_t length;
     size_t data[];
 };
+
+static inline int
+lyra_insn_call_args_has_return(const struct lyra_insn_call_args *args) {
+    return (args->flags & LYRA_INSN_CALL_NO_RET_FLAG) == 0;
+}
 
 struct lyra_insn_call_args *
 lyra_insn_call_args_new_idx(size_t idx, size_t length,

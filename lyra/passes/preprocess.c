@@ -78,22 +78,27 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
     for (struct lyra_insn *insn = block->insn_first; insn != 0;
          insn = insn->next) {
         int has_dest_reg = lyra_insn_type_has_dest(insn->type);
+
         if (lyra_insn_type_has_left_var(insn->type))
             insn->left_var =
                 size_t_array_at(variable_mapping, shared->managed_vars_len,
                                 insn->left_var);
+
         if (lyra_insn_type_has_right_var(insn->type))
             insn->right_operand.var =
                 size_t_array_at(variable_mapping, shared->managed_vars_len,
                                 insn->right_operand.var);
-        else if (insn->type == LYRA_OP_CALL ||
-                 insn->type == LYRA_OP_CALL_FLAT) {
-            for (size_t i = 0; i < insn->right_operand.call_args->length;
-                 i++)
-                insn->right_operand.call_args->data[i] = size_t_array_at(
-                    variable_mapping, shared->managed_vars_len,
-                    insn->right_operand.call_args->data[i]);
+        else if (insn->type == LYRA_OP_CALL) {
+            struct lyra_insn_call_args *args =
+                insn->right_operand.call_args;
+            for (size_t i = 0; i < args->length; i++)
+                args->data[i] = size_t_array_at(variable_mapping,
+                                                shared->managed_vars_len,
+                                                args->data[i]);
+            if (lyra_insn_call_args_has_return(args))
+                has_dest_reg = 1;
         }
+
         if (has_dest_reg) {
             if (lyra_function_shared_is_var_multiple_use(shared,
                                                          insn->dest_var))

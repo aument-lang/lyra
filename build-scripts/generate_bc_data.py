@@ -31,38 +31,7 @@ class Compiler:
 
     def raw(self, string):
         self.c_source += f'lyra_comp_print_str(c,"{string}");\n'
-    
-    def call_args(self):
-        self.c_source += """\
-lyra_comp_print_str(c,"{au_value_t _args={");
-for(size_t i = 0; i < insn->right_operand.call_args->length; i++) {
-    lyra_comp_print_str(c, "v");
-    lyra_comp_print_isize(c, insn->right_operand.call_args->data[i]);
-    lyra_comp_print_str(c, ",");
-}
-lyra_comp_print_str(c,"};");
-lyra_comp_print_str(c,"v");
-lyra_comp_print_isize(c,insn->dest_var);
-lyra_comp_print_str(c,"=");
-lyra_insn_call_args_comp_name(insn->right_operand.call_args, c);
-lyra_comp_print_str(c,"(&_args);}");\
-"""
-    
-    def call_args_flat(self):
-        self.c_source += """\
-lyra_insn_call_args_comp_name(insn->right_operand.call_args, c);
-lyra_comp_print_str(c,"(");
-if(insn->right_operand.call_args->length > 0) {
-    lyra_comp_print_str(c, "v");
-    lyra_comp_print_isize(c, insn->right_operand.call_args->data[0]);
-    for(size_t i = 1; i < insn->right_operand.call_args->length; i++) {
-        lyra_comp_print_str(c, ",v");
-        lyra_comp_print_isize(c, insn->right_operand.call_args->data[i]);
-    }
-}
-lyra_comp_print_str(c,")");\
-"""
-    
+   
     def end(self):
         self.raw(";")
         return self.c_source
@@ -228,13 +197,43 @@ def gen_load_arg(compiler):
 Instruction("LOAD_ARG", ARG_TYPE_NONE, ARG_TYPE_I32, c_codegen=gen_load_arg)
 
 def gen_call(compiler):
-    compiler.call_args()
-Instruction("CALL", ARG_TYPE_NONE, ARG_TYPE_CALL_ARGS, c_codegen=gen_call, has_side_effect=True)
-
-def gen_call_flat(compiler):
-    compiler.assign_dest_var()
-    compiler.call_args_flat()
-Instruction("CALL_FLAT", ARG_TYPE_NONE, ARG_TYPE_CALL_ARGS, c_codegen=gen_call_flat, has_side_effect=True)
+    compiler.c_source += '''\
+const uint32_t flags = insn->right_operand.call_args->flags;
+if((flags & LYRA_INSN_CALL_FLAT_ARGS_FLAG) == 0) {
+    lyra_comp_print_str(c,"{au_value_t _args={");
+    for(size_t i = 0; i < insn->right_operand.call_args->length; i++) {
+        lyra_comp_print_str(c, "v");
+        lyra_comp_print_isize(c, insn->right_operand.call_args->data[i]);
+        lyra_comp_print_str(c, ",");
+    }
+    lyra_comp_print_str(c,"};");
+    if((flags & LYRA_INSN_CALL_NO_RET_FLAG) == 0) {
+        lyra_comp_print_str(c,"v");
+        lyra_comp_print_isize(c,insn->dest_var);
+        lyra_comp_print_str(c,"=");
+    }
+    lyra_insn_call_args_comp_name(insn->right_operand.call_args, c);
+    lyra_comp_print_str(c,"(&_args);}");
+} else {
+    if((flags & LYRA_INSN_CALL_NO_RET_FLAG) == 0) {
+        lyra_comp_print_str(c,"v");
+        lyra_comp_print_isize(c,insn->dest_var);
+        lyra_comp_print_str(c,"=");
+    }
+    lyra_insn_call_args_comp_name(insn->right_operand.call_args, c);
+    lyra_comp_print_str(c,"(");
+    if(insn->right_operand.call_args->length > 0) {
+        lyra_comp_print_str(c, "v");
+        lyra_comp_print_isize(c, insn->right_operand.call_args->data[0]);
+        for(size_t i = 1; i < insn->right_operand.call_args->length; i++) {
+            lyra_comp_print_str(c, ",v");
+            lyra_comp_print_isize(c, insn->right_operand.call_args->data[i]);
+        }
+    }
+    lyra_comp_print_str(c,")");
+}\
+'''
+Instruction("CALL", ARG_TYPE_NONE, ARG_TYPE_CALL_ARGS, has_dest=False, c_codegen=gen_call, has_side_effect=True)
 
 # Types data
 
