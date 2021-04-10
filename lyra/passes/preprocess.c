@@ -103,17 +103,12 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
             if (lyra_function_shared_is_var_multiple_use(shared,
                                                          insn->dest_var))
                 continue;
-            if (LYRA_BA_GET_BIT(shared->managed_vars_set,
-                                insn->dest_var)) {
-                enum lyra_value_type type =
-                    shared->variable_types[insn->dest_var];
-                const size_t new_reg =
-                    lyra_function_shared_add_variable(shared, type, ctx);
-                variable_mapping[insn->dest_var] = new_reg;
-                insn->dest_var = new_reg;
-            } else {
-                LYRA_BA_SET_BIT(shared->managed_vars_set, insn->dest_var);
-            }
+            enum lyra_value_type type =
+                shared->variable_types[insn->dest_var];
+            const size_t new_reg =
+                lyra_function_shared_add_variable(shared, type, ctx);
+            variable_mapping[insn->dest_var] = new_reg;
+            insn->dest_var = new_reg;
         }
     }
 

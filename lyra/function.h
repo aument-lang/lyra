@@ -14,8 +14,6 @@ struct lyra_function_shared {
     enum lyra_value_type *variable_types;
     size_t variables_len;
     lyra_bit_array used_vars;
-    /// Bit array of already set variables
-    lyra_bit_array managed_vars_set;
     /// Bit array of variables that are used in multiple blocks.
     /// Do NOT access this variable directly
     /// (use lyra_function_shared_is_var_multiple_use)
