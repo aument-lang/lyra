@@ -294,7 +294,7 @@ int lyra_pass_const_prop(struct lyra_block *block,
             has_result = 1;                                               \
         } else if (ltype == LYRA_VALUE_F64 && rtype == LYRA_VALUE_I32) {  \
             result = constants[insn->left_var].data.f64 C_OP(             \
-                (double)constants[insn->right_operand.var].data.f64);     \
+                (double)constants[insn->right_operand.var].data.i32);     \
             has_result = 1;                                               \
         }                                                                 \
         if (has_result) {                                                 \
@@ -310,16 +310,28 @@ int lyra_pass_const_prop(struct lyra_block *block,
         continue;                                                         \
     }
         case LYRA_OP_EQ_VAR:
+        case LYRA_OP_EQ_PRIM:
+        case LYRA_OP_EQ_NUM:
             COMP_OP(LYRA_OP_EQ, ==)
         case LYRA_OP_NEQ_VAR:
+        case LYRA_OP_NEQ_PRIM:
+        case LYRA_OP_NEQ_NUM:
             COMP_OP(LYRA_OP_NEQ, !=)
         case LYRA_OP_LT_VAR:
+        case LYRA_OP_LT_PRIM:
+        case LYRA_OP_LT_NUM:
             COMP_OP(LYRA_OP_LT, <)
         case LYRA_OP_GT_VAR:
+        case LYRA_OP_GT_PRIM:
+        case LYRA_OP_GT_NUM:
             COMP_OP(LYRA_OP_GT, >)
         case LYRA_OP_LEQ_VAR:
+        case LYRA_OP_LEQ_PRIM:
+        case LYRA_OP_LEQ_NUM:
             COMP_OP(LYRA_OP_LEQ, <=)
         case LYRA_OP_GEQ_VAR:
+        case LYRA_OP_GEQ_PRIM:
+        case LYRA_OP_GEQ_NUM:
             COMP_OP(LYRA_OP_GEQ, >=)
 #undef COMP_OP
         default:
