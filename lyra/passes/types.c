@@ -458,6 +458,7 @@ int lyra_pass_correct_var_movs(struct lyra_block *block,
         case LYRA_OP_ENSURE_VALUE_I32:
         case LYRA_OP_ENSURE_VALUE_F64:
         case LYRA_OP_ENSURE_VALUE_UNTYPED:
+        case LYRA_OP_ENSURE_NUM:
         case LYRA_OP_ENSURE_NUM_UNTYPED:
         case LYRA_OP_ENSURE_NUM_I32:
         case LYRA_OP_ENSURE_NUM_F64: {
