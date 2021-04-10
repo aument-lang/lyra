@@ -543,7 +543,7 @@ int lyra_pass_remove_indirection(struct lyra_block *block,
         if (lyra_insn_type_has_dest(insn->type) &&
             lyra_function_shared_is_var_multiple_use(shared,
                                                      insn->dest_var))
-            break;
+            continue;
         switch (insn->type) {
         case LYRA_OP_MOV_VAR:
         case LYRA_OP_ENSURE_VALUE_NUM:
