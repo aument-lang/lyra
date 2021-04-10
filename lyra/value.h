@@ -5,6 +5,7 @@
 // See LICENSE.txt for license information
 #pragma once
 
+#include "insn.h"
 #include <stdint.h>
 
 enum lyra_value_type {
@@ -86,6 +87,34 @@ lyra_value_type_to_any_fn(enum lyra_value_type type) {
         return "au_value_string";
     }
     return 0;
+}
+
+static inline enum lyra_insn_type
+lyra_value_type_to_any_op(enum lyra_value_type type) {
+    switch (type) {
+    case LYRA_VALUE_UNTYPED: {
+        return LYRA_OP_ENSURE_VALUE_UNTYPED;
+    }
+    case LYRA_VALUE_ANY: {
+        return LYRA_OP_MOV_VAR;
+    }
+    case LYRA_VALUE_BOOL: {
+        return LYRA_OP_ENSURE_VALUE_BOOL;
+    }
+    case LYRA_VALUE_I32: {
+        return LYRA_OP_ENSURE_VALUE_I32;
+    }
+    case LYRA_VALUE_F64: {
+        return LYRA_OP_ENSURE_VALUE_F64;
+    }
+    case LYRA_VALUE_NUM: {
+        return LYRA_OP_ENSURE_VALUE_NUM;
+    }
+    case LYRA_VALUE_STR: {
+        return LYRA_OP_ENSURE_VALUE_STR;
+    }
+    }
+    abort();
 }
 
 struct lyra_string;

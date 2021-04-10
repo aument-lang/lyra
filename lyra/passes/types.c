@@ -11,6 +11,7 @@
 #include "bit_array.h"
 #include "block.h"
 #include "function.h"
+#include "value.h"
 
 static size_t generate_cast(struct lyra_insn *insn, size_t var,
                             enum lyra_value_type into_type,
@@ -49,37 +50,10 @@ static size_t generate_cast_to_any(struct lyra_insn *insn, size_t var,
                                    struct lyra_block *block,
                                    struct lyra_function_shared *shared,
                                    struct lyra_ctx *ctx) {
-    enum lyra_insn_type cast_op;
-    switch (shared->variable_types[var]) {
-    case LYRA_VALUE_UNTYPED: {
-        cast_op = LYRA_OP_ENSURE_VALUE_UNTYPED;
-        break;
-    }
-    case LYRA_VALUE_ANY: {
+    if (shared->variable_types[var] == LYRA_VALUE_ANY)
         return var;
-    }
-    case LYRA_VALUE_BOOL: {
-        cast_op = LYRA_OP_ENSURE_VALUE_BOOL;
-        break;
-    }
-    case LYRA_VALUE_I32: {
-        cast_op = LYRA_OP_ENSURE_VALUE_I32;
-        break;
-    }
-    case LYRA_VALUE_F64: {
-        cast_op = LYRA_OP_ENSURE_VALUE_F64;
-        break;
-    }
-    case LYRA_VALUE_NUM: {
-        cast_op = LYRA_OP_ENSURE_VALUE_NUM;
-        break;
-    }
-    case LYRA_VALUE_STR: {
-        cast_op = LYRA_OP_ENSURE_VALUE_STR;
-        break;
-    }
-    }
-
+    enum lyra_insn_type cast_op =
+        lyra_value_type_to_any_op(shared->variable_types[var]);
     const size_t new_var =
         lyra_function_shared_add_variable(shared, LYRA_VALUE_ANY, ctx);
 

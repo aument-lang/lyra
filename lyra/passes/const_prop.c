@@ -12,48 +12,63 @@
 #include "function.h"
 #include "platform.h"
 
-static struct lyra_value generate_const_bool_insn(struct lyra_insn *insn,
-                                                  int32_t value) {
-    insn->type = LYRA_OP_MOV_I32;
-    insn->right_operand.i32 = value;
-    return (struct lyra_value){
-        .type = LYRA_VALUE_BOOL,
-        .data.i32 = value,
-    };
+static struct lyra_insn *cast_to_any(struct lyra_insn *insn,
+                                     enum lyra_value_type type,
+                                     struct lyra_block *block,
+                                     struct lyra_function_shared *shared,
+                                     struct lyra_ctx *ctx) {
+    const size_t any_var = insn->dest_var;
+    const size_t tmp_var =
+        lyra_function_shared_add_variable(shared, type, ctx);
+    struct lyra_insn *new_insn = lyra_insn_new(
+        insn->type, insn->left_var, insn->right_operand, tmp_var, ctx);
+    lyra_block_insert_insn(block, insn->prev, new_insn);
+
+    insn->type = lyra_value_type_to_any_op(type);
+    insn->left_var = tmp_var;
+    insn->dest_var = any_var;
+    return new_insn;
 }
 
-static struct lyra_value generate_const_i32_insn(struct lyra_insn *insn,
-                                                 int32_t value) {
-    insn->type = LYRA_OP_MOV_I32;
-    insn->right_operand.i32 = value;
-    return (struct lyra_value){
-        .type = LYRA_VALUE_I32,
-        .data.i32 = value,
-    };
+static void generate_const_insn(struct lyra_insn *insn,
+                                struct lyra_value value,
+                                struct lyra_block *block,
+                                struct lyra_function_shared *shared,
+                                struct lyra_ctx *ctx) {
+    if (value.type == LYRA_VALUE_UNTYPED)
+        return;
+    if (shared->variable_types[insn->dest_var] == LYRA_VALUE_ANY) {
+        insn = cast_to_any(insn, value.type, block, shared, ctx);
+    }
+    switch (value.type) {
+    case LYRA_VALUE_BOOL:
+    case LYRA_VALUE_I32: {
+        insn->type = LYRA_OP_MOV_I32;
+        insn->right_operand.i32 = value.data.i32;
+        break;
+    }
+    case LYRA_VALUE_F64: {
+        insn->type = LYRA_OP_MOV_F64;
+        insn->right_operand.f64 = value.data.f64;
+        break;
+    }
+    case LYRA_VALUE_STR: {
+        insn->type = LYRA_OP_MOV_STR;
+        insn->right_operand.str = value.data.str;
+        break;
+    }
+    default:
+        abort();
+    }
 }
 
-static struct lyra_value generate_const_f64_insn(struct lyra_insn *insn,
-                                                 double value) {
-    insn->type = LYRA_OP_MOV_F64;
-    insn->right_operand.f64 = value;
-    return (struct lyra_value){
-        .type = LYRA_VALUE_F64,
-        .data.f64 = value,
-    };
-}
-
-static struct lyra_value generate_const_str_insn(struct lyra_insn *insn,
-                                                 struct lyra_string *str) {
-    insn->type = LYRA_OP_MOV_STR;
-    insn->right_operand.str = str;
-    return (struct lyra_value){
-        .type = LYRA_VALUE_STR,
-        .data.str = str,
-    };
-}
-
-static int into_const_mov(struct lyra_insn *insn,
-                          struct lyra_value value) {
+static int into_const_mov(struct lyra_insn *insn, struct lyra_value value,
+                          LYRA_UNUSED struct lyra_block *block,
+                          LYRA_UNUSED struct lyra_function_shared *shared,
+                          LYRA_UNUSED struct lyra_ctx *ctx) {
+    if (shared->variable_types[insn->dest_var] == LYRA_VALUE_ANY) {
+        insn = cast_to_any(insn, value.type, block, shared, ctx);
+    }
     switch (value.type) {
     case LYRA_VALUE_I32: {
         insn->type = LYRA_OP_MOV_I32;
@@ -72,7 +87,7 @@ static int into_const_mov(struct lyra_insn *insn,
 
 int lyra_pass_const_prop(struct lyra_block *block,
                          struct lyra_function_shared *shared,
-                         LYRA_UNUSED struct lyra_ctx *ctx) {
+                         struct lyra_ctx *ctx) {
     struct lyra_value *constants =
         malloc(sizeof(struct lyra_value) * shared->variables_len);
     for (size_t i = 0; i < shared->variables_len; i++)
@@ -88,37 +103,54 @@ int lyra_pass_const_prop(struct lyra_block *block,
             if (lyra_function_shared_is_var_multiple_use(shared,
                                                          insn->dest_var))
                 continue;
-            constants[insn->dest_var] =
-                generate_const_i32_insn(insn, insn->right_operand.i32);
+            constants[insn->dest_var] = (struct lyra_value){
+                .data.i32 = insn->right_operand.i32,
+                .type = LYRA_VALUE_I32,
+            };
+            generate_const_insn(insn, constants[insn->dest_var], block,
+                                shared, ctx);
             break;
         }
         case LYRA_OP_MOV_F64: {
             if (lyra_function_shared_is_var_multiple_use(shared,
                                                          insn->dest_var))
                 continue;
-            constants[insn->dest_var] =
-                generate_const_f64_insn(insn, insn->right_operand.f64);
+            constants[insn->dest_var] = (struct lyra_value){
+                .data.f64 = insn->right_operand.f64,
+                .type = LYRA_VALUE_F64,
+            };
+            generate_const_insn(insn, constants[insn->dest_var], block,
+                                shared, ctx);
             break;
         }
         case LYRA_OP_MOV_BOOL: {
             if (lyra_function_shared_is_var_multiple_use(shared,
                                                          insn->dest_var))
                 continue;
-            constants[insn->dest_var] =
-                generate_const_bool_insn(insn, insn->right_operand.i32);
+            constants[insn->dest_var] = (struct lyra_value){
+                .data.i32 = insn->right_operand.i32,
+                .type = LYRA_VALUE_BOOL,
+            };
+            generate_const_insn(insn, constants[insn->dest_var], block,
+                                shared, ctx);
             break;
         }
         case LYRA_OP_MOV_STR: {
             if (lyra_function_shared_is_var_multiple_use(shared,
                                                          insn->dest_var))
                 continue;
-            constants[insn->dest_var] =
-                generate_const_str_insn(insn, insn->right_operand.str);
+            constants[insn->dest_var] = (struct lyra_value){
+                .data.str = insn->right_operand.str,
+                .type = LYRA_VALUE_STR,
+            };
+            generate_const_insn(insn, constants[insn->dest_var], block,
+                                shared, ctx);
             break;
         }
         // mov var->var instructions
         case LYRA_OP_MOV_VAR: {
-            if (into_const_mov(insn, constants[insn->left_var])) {
+            if (into_const_mov(insn, constants[insn->left_var], block,
+                               shared, ctx)) {
                 constants[insn->dest_var] = constants[insn->left_var];
                 continue;
             }
@@ -126,6 +158,8 @@ int lyra_pass_const_prop(struct lyra_block *block,
                                                          insn->dest_var))
                 continue;
             constants[insn->dest_var] = constants[insn->left_var];
+            generate_const_insn(insn, constants[insn->dest_var], block,
+                                shared, ctx);
             break;
         }
         // Casting
@@ -138,6 +172,8 @@ int lyra_pass_const_prop(struct lyra_block *block,
                     .data.f64 = (double)constants[insn->left_var].data.i32,
                     .type = LYRA_VALUE_F64,
                 };
+                generate_const_insn(insn, constants[insn->dest_var], block,
+                                    shared, ctx);
             }
             break;
         }
@@ -153,35 +189,47 @@ int lyra_pass_const_prop(struct lyra_block *block,
             switch (lhs.type) {
             case LYRA_VALUE_I32: {
                 if (rhs.type == LYRA_VALUE_I32) {
-                    constants[insn->dest_var] = generate_const_i32_insn(
-                        insn, lhs.data.i32 + rhs.data.i32);
+                    constants[insn->dest_var] = (struct lyra_value){
+                        .data.i32 = lhs.data.i32 + rhs.data.i32,
+                        .type = LYRA_VALUE_I32,
+                    };
                 } else if (rhs.type == LYRA_VALUE_F64) {
-                    constants[insn->dest_var] = generate_const_f64_insn(
-                        insn, (double)lhs.data.i32 + rhs.data.f64);
+                    constants[insn->dest_var] = (struct lyra_value){
+                        .data.f64 = (double)lhs.data.i32 + rhs.data.f64,
+                        .type = LYRA_VALUE_F64,
+                    };
                 }
                 break;
             }
             case LYRA_VALUE_F64: {
                 if (rhs.type == LYRA_VALUE_I32) {
-                    constants[insn->dest_var] = generate_const_f64_insn(
-                        insn, lhs.data.f64 + (double)rhs.data.i32);
+                    constants[insn->dest_var] = (struct lyra_value){
+                        .data.f64 = lhs.data.f64 + (double)rhs.data.i32,
+                        .type = LYRA_VALUE_F64,
+                    };
                 } else if (rhs.type == LYRA_VALUE_F64) {
-                    constants[insn->dest_var] = generate_const_f64_insn(
-                        insn, lhs.data.f64 + rhs.data.f64);
+                    constants[insn->dest_var] = (struct lyra_value){
+                        .data.f64 = lhs.data.f64 + rhs.data.f64,
+                        .type = LYRA_VALUE_F64,
+                    };
                 }
                 break;
             }
             case LYRA_VALUE_STR: {
                 if (rhs.type == LYRA_VALUE_STR) {
-                    constants[insn->dest_var] = generate_const_str_insn(
-                        insn,
-                        lyra_string_add(ctx, lhs.data.str, rhs.data.str));
+                    constants[insn->dest_var] = (struct lyra_value){
+                        .data.str = lyra_string_add(ctx, lhs.data.str,
+                                                    rhs.data.str),
+                        .type = LYRA_VALUE_STR,
+                    };
                 }
                 break;
             }
             default:
                 break;
             }
+            generate_const_insn(insn, constants[insn->dest_var], block,
+                                shared, ctx);
             break;
         }
 #define DEF_BIN_OP(OP)                                                    \
@@ -191,27 +239,37 @@ int lyra_pass_const_prop(struct lyra_block *block,
         switch (lhs.type) {                                               \
         case LYRA_VALUE_I32: {                                            \
             if (rhs.type == LYRA_VALUE_I32) {                             \
-                constants[insn->dest_var] = generate_const_i32_insn(      \
-                    insn, lhs.data.i32 OP rhs.data.i32);                  \
+                constants[insn->dest_var] = (struct lyra_value){          \
+                    .data.i32 = lhs.data.i32 OP rhs.data.i32,             \
+                    .type = LYRA_VALUE_I32,                               \
+                };                                                        \
             } else if (rhs.type == LYRA_VALUE_F64) {                      \
-                constants[insn->dest_var] = generate_const_f64_insn(      \
-                    insn, (double)lhs.data.i32 OP rhs.data.f64);          \
+                constants[insn->dest_var] = (struct lyra_value){          \
+                    .data.f64 = (double)lhs.data.i32 OP rhs.data.f64,     \
+                    .type = LYRA_VALUE_F64,                               \
+                };                                                        \
             }                                                             \
             break;                                                        \
         }                                                                 \
         case LYRA_VALUE_F64: {                                            \
             if (rhs.type == LYRA_VALUE_I32) {                             \
-                constants[insn->dest_var] = generate_const_f64_insn(      \
-                    insn, lhs.data.f64 OP(double) rhs.data.i32);          \
+                constants[insn->dest_var] = (struct lyra_value){          \
+                    .data.f64 = lhs.data.f64 OP(double) rhs.data.i32,     \
+                    .type = LYRA_VALUE_F64,                               \
+                };                                                        \
             } else if (rhs.type == LYRA_VALUE_F64) {                      \
-                constants[insn->dest_var] = generate_const_f64_insn(      \
-                    insn, lhs.data.f64 OP rhs.data.f64);                  \
+                constants[insn->dest_var] = (struct lyra_value){          \
+                    .data.i32 = lhs.data.f64 + rhs.data.f64,              \
+                    .type = LYRA_VALUE_F64,                               \
+                };                                                        \
             }                                                             \
             break;                                                        \
         }                                                                 \
         default:                                                          \
             break;                                                        \
         }                                                                 \
+        generate_const_insn(insn, constants[insn->dest_var], block,       \
+                            shared, ctx);                                 \
         break;                                                            \
     }
         case LYRA_OP_SUB_VAR:
@@ -233,27 +291,38 @@ int lyra_pass_const_prop(struct lyra_block *block,
             switch (lhs.type) {
             case LYRA_VALUE_I32: {
                 if (rhs.type == LYRA_VALUE_I32) {
-                    constants[insn->dest_var] = generate_const_f64_insn(
-                        insn, (double)lhs.data.i32 / (double)rhs.data.i32);
+                    constants[insn->dest_var] = (struct lyra_value){
+                        .data.f64 =
+                            (double)lhs.data.i32 / (double)rhs.data.i32,
+                        .type = LYRA_VALUE_F64,
+                    };
                 } else if (rhs.type == LYRA_VALUE_F64) {
-                    constants[insn->dest_var] = generate_const_f64_insn(
-                        insn, (double)lhs.data.i32 / rhs.data.f64);
+                    constants[insn->dest_var] = (struct lyra_value){
+                        .data.f64 = (double)lhs.data.i32 / rhs.data.f64,
+                        .type = LYRA_VALUE_F64,
+                    };
                 }
                 break;
             }
             case LYRA_VALUE_F64: {
                 if (rhs.type == LYRA_VALUE_I32) {
-                    constants[insn->dest_var] = generate_const_f64_insn(
-                        insn, lhs.data.f64 / (double)rhs.data.i32);
+                    constants[insn->dest_var] = (struct lyra_value){
+                        .data.f64 = lhs.data.f64 / (double)rhs.data.i32,
+                        .type = LYRA_VALUE_F64,
+                    };
                 } else if (rhs.type == LYRA_VALUE_F64) {
-                    constants[insn->dest_var] = generate_const_f64_insn(
-                        insn, lhs.data.f64 / rhs.data.f64);
+                    constants[insn->dest_var] = (struct lyra_value){
+                        .data.f64 = lhs.data.f64 / rhs.data.f64,
+                        .type = LYRA_VALUE_F64,
+                    };
                 }
                 break;
             }
             default:
                 break;
             }
+            generate_const_insn(insn, constants[insn->dest_var], block,
+                                shared, ctx);
             break;
         }
         case LYRA_OP_MOD_I32: {
@@ -261,8 +330,12 @@ int lyra_pass_const_prop(struct lyra_block *block,
             const struct lyra_value rhs =
                 constants[insn->right_operand.var];
             if (lhs.type == LYRA_VALUE_I32 && rhs.type == LYRA_VALUE_I32) {
-                constants[insn->dest_var] = generate_const_i32_insn(
-                    insn, lhs.data.i32 % rhs.data.i32);
+                constants[insn->dest_var] = (struct lyra_value){
+                    .data.f64 = lhs.data.f64 / rhs.data.f64,
+                    .type = LYRA_VALUE_F64,
+                };
+                generate_const_insn(insn, constants[insn->dest_var], block,
+                                    shared, ctx);
             }
             break;
         }
@@ -307,6 +380,8 @@ int lyra_pass_const_prop(struct lyra_block *block,
             insn->left_var = 0;                                           \
             insn->right_operand = LYRA_INSN_I32(result);                  \
         }                                                                 \
+        generate_const_insn(insn, constants[insn->dest_var], block,       \
+                            shared, ctx);                                 \
         continue;                                                         \
     }
         case LYRA_OP_EQ_VAR:
