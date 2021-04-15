@@ -60,3 +60,5 @@ typedef int (*lyra_block_mutator_fn_t)(struct lyra_block *,
 
 int lyra_function_all_blocks(struct lyra_function *fn,
                              lyra_block_mutator_fn_t mutator);
+
+void lyra_function_defrag_vars(struct lyra_function *fn);

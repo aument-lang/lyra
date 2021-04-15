@@ -4,6 +4,7 @@
 // Licensed under Apache License v2.0
 // See LICENSE.txt for license information
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -41,6 +42,12 @@ int lyra_pass_check_multiple_use(struct lyra_block *block,
                                 insn->right_operand.var);
             }
             LYRA_BA_SET_BIT(used_vars, insn->right_operand.var);
+        }
+    }
+    if (lyra_block_connector_type_has_var(block->connector.type)) {
+        if (!LYRA_BA_GET_BIT(owned_vars, block->connector.var)) {
+            LYRA_BA_SET_BIT(shared->managed_vars_multiple_use,
+                            block->connector.var);
         }
     }
     free(owned_vars);
@@ -119,3 +126,56 @@ int lyra_pass_into_semi_ssa(struct lyra_block *block,
     free(variable_mapping);
     return 1;
 }
+
+void lyra_function_defrag_vars(struct lyra_function *fn) {
+    size_t *variable_mapping =
+        malloc(sizeof(size_t) * fn->shared.variables_len);
+    for (size_t i = 0; i < fn->shared.variables_len; i++)
+        variable_mapping[i] = i;
+
+    size_t placement = 0;
+    for (size_t i = 0; i < fn->shared.variables_len; i++) {
+        if (fn->shared.variable_types[i] == LYRA_VALUE_UNTYPED) {
+            variable_mapping[i] = (size_t)-1;
+            continue;
+        }
+        assert(placement < i);
+        variable_mapping[i] = placement;
+        fn->shared.variable_types[placement] = fn->shared.variable_types[i];
+        placement++;
+    }
+    fn->shared.variables_len = placement;
+
+    for (size_t n_block = 0; n_block < fn->blocks.len; n_block++) {
+        struct lyra_block *block = &fn->blocks.data[n_block];
+        for (struct lyra_insn *insn = block->insn_first; insn != 0;
+             insn = insn->next) {
+            int has_dest_reg = lyra_insn_type_has_dest(insn->type);
+
+            if (lyra_insn_type_has_left_var(insn->type))
+                insn->left_var = variable_mapping[insn->left_var];
+
+            if (lyra_insn_type_has_right_var(insn->type))
+                insn->right_operand.var = variable_mapping[insn->right_operand.var];
+            else if (insn->type == LYRA_OP_CALL) {
+                struct lyra_insn_call_args *args =
+                    insn->right_operand.call_args;
+                for (size_t i = 0; i < args->length; i++)
+                    args->data[i] = variable_mapping[args->data[i]];
+                if (lyra_insn_call_args_has_return(args))
+                    has_dest_reg = 1;
+            }
+            
+            if (has_dest_reg) {
+                insn->dest_var = variable_mapping[insn->dest_var];
+            }
+        }
+
+        if (lyra_block_connector_type_has_var(block->connector.type)) {
+            block->connector.var = variable_mapping[block->connector.var];
+        }
+    }
+
+    free(variable_mapping);
+}
+

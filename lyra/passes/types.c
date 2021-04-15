@@ -561,3 +561,41 @@ int lyra_pass_correct_var_movs(struct lyra_block *block,
     }
     return 1;
 }
+
+int lyra_pass_remove_indirection(struct lyra_block *block,
+                                 struct lyra_function_shared *shared,
+                                 LYRA_UNUSED struct lyra_ctx *ctx) {
+    size_t *direct_registers =
+        malloc(sizeof(size_t) * shared->variables_len);
+    for (size_t i = 0; i < shared->variables_len; i++)
+        direct_registers[i] = i;
+
+    for (struct lyra_insn *insn = block->insn_first; insn != 0;
+         insn = insn->next) {
+        if (lyra_insn_type_has_dest(insn->type) &&
+            lyra_function_shared_is_var_multiple_use(shared,
+                                                     insn->dest_var))
+            continue;
+        switch (insn->type) {
+        case LYRA_OP_MOV_VAR: {
+            direct_registers[insn->dest_var] =
+                direct_registers[insn->left_var];
+            insn->left_var = direct_registers[insn->left_var];
+            break;
+        }
+        default: {
+            if (lyra_insn_type_has_left_var(insn->type)) {
+                insn->left_var = direct_registers[insn->left_var];
+            }
+            if (lyra_insn_type_has_right_var(insn->type)) {
+                insn->right_operand.var =
+                    direct_registers[insn->right_operand.var];
+            }
+            break;
+        }
+        }
+    }
+    free(direct_registers);
+    return 1;
+}
+
