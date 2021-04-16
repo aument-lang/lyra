@@ -13,6 +13,10 @@
 #include "block.h"
 #include "function.h"
 #include "platform.h"
+#include "array.h"
+
+LYRA_ARRAY_COPY(size_t, variable_map_array, 1)
+LYRA_ARRAY_COPY(size_t *, shared_to_local_array, 1)
 
 static inline int block_falls_through(const struct lyra_block *block, const size_t i) {
     return block->connector.type == LYRA_BLOCK_FALLTHROUGH ||
@@ -168,63 +172,74 @@ int lyra_pass_check_multiple_set(struct lyra_block *block,
     return 1;
 }
 
-static inline size_t size_t_array_at(size_t *a, size_t n, size_t idx) {
-    if (idx >= n)
-        lyra_fatal_index(a, idx, n);
-    return a[idx];
-}
+// TODO: clean up these passes
 
-int lyra_pass_into_semi_ssa(struct lyra_block *block,
-                            struct lyra_function_shared *shared,
-                            struct lyra_ctx *ctx) {
-    size_t *variable_mapping =
-        malloc(sizeof(size_t) * shared->managed_vars_len);
-    for (size_t i = 0; i < shared->managed_vars_len; i++)
-        variable_mapping[i] = i;
+void lyra_function_into_semi_ssa(struct lyra_function *fn) {
+    struct variable_map_array variable_mapping = (struct variable_map_array) {
+        .data = calloc(fn->shared.managed_vars_len, sizeof(size_t)),
+        .len = fn->shared.managed_vars_len,
+        .cap = fn->shared.managed_vars_len,
+    };
 
-    for (struct lyra_insn *insn = block->insn_first; insn != 0;
-         insn = insn->next) {
-        int has_dest_reg = lyra_insn_type_has_dest(insn->type);
-
-        if (lyra_insn_type_has_left_var(insn->type))
-            insn->left_var =
-                size_t_array_at(variable_mapping, shared->managed_vars_len,
-                                insn->left_var);
-
-        if (lyra_insn_type_has_right_var(insn->type))
-            insn->right_operand.var =
-                size_t_array_at(variable_mapping, shared->managed_vars_len,
-                                insn->right_operand.var);
-        else if (insn->type == LYRA_OP_CALL) {
-            struct lyra_insn_call_args *args =
-                insn->right_operand.call_args;
-            for (size_t i = 0; i < args->length; i++)
-                args->data[i] = size_t_array_at(variable_mapping,
-                                                shared->managed_vars_len,
-                                                args->data[i]);
-            if (lyra_insn_call_args_has_return(args))
-                has_dest_reg = 1;
-        }
-
-        if (has_dest_reg) {
-            if (lyra_function_shared_is_var_multiple_use(shared,
-                                                         insn->dest_var))
-                continue;
-            enum lyra_value_type type =
-                shared->variable_types[insn->dest_var];
-            const size_t new_reg =
-                lyra_function_shared_add_variable(shared, type, ctx);
-            variable_mapping[insn->dest_var] = new_reg;
-            insn->dest_var = new_reg;
+    struct shared_to_local_array shared_to_local_mapping = (struct shared_to_local_array) {
+        .data = calloc(fn->shared.managed_vars_len, sizeof(size_t*)),
+        .len = fn->shared.managed_vars_len,
+        .cap = fn->shared.managed_vars_len,
+    };
+    for(size_t var_idx = 0; var_idx < LYRA_BA_LEN(fn->shared.managed_vars_len); v++) {
+        if (LYRA_BA_GET(fn->shared.managed_vars_multiple_use, var_idx)) {
+            shared_to_local_mapping.data[var_idx] = calloc(fn->blocks.len, sizeof(size_t));
+            for (size_t block_idx = 0; block_idx < fn->blocks.len; block_idx++)
+                shared_to_local_mapping.data[var_idx][block_idx] = var_idx;
         }
     }
 
-    if (lyra_block_connector_type_has_var(block->connector.type)) {
-        block->connector.var = variable_mapping[block->connector.var];
+    for(size_t block_idx = 0; block_idx < fn->blocks.len; block_idx++) {
+        struct lyra_block *block = &fn->blocks.data[block_idx];
+
+        for (size_t i = 0; i < variable_mapping.len; i++)
+            variable_mapping.data[i] = i;
+
+        for (struct lyra_insn *insn = block->insn_first; insn != 0;
+            insn = insn->next) {
+            int has_dest_reg = lyra_insn_type_has_dest(insn->type);
+
+            if (lyra_insn_type_has_left_var(insn->type))
+                insn->left_var =
+                    variable_map_array_at(&variable_mapping, insn->left_var);
+
+            if (lyra_insn_type_has_right_var(insn->type))
+                insn->right_operand.var =
+                    variable_map_array_at(&variable_mapping, insn->right_operand.var);
+            else if (insn->type == LYRA_OP_CALL) {
+                struct lyra_insn_call_args *args =
+                    insn->right_operand.call_args;
+                for (size_t i = 0; i < args->length; i++)
+                    args->data[i] = variable_map_array_at(&variable_mapping, args->data[i]);
+                if (lyra_insn_call_args_has_return(args))
+                    has_dest_reg = 1;
+            }
+
+            if (has_dest_reg) {
+                enum lyra_value_type type =
+                    fn->shared.variable_types[insn->dest_var];
+                const size_t new_reg = lyra_function_add_variable(fn, type);
+                if (lyra_function_shared_is_var_multiple_use(&fn->shared,
+                                                            insn->dest_var)) {
+                    shared_to_local_mapping.data[insn->dest_var][block_idx] = new_reg;
+                }
+                variable_map_array_set(&variable_mapping, insn->dest_var, new_reg);
+                insn->dest_var = new_reg;
+            }
+        }
+
+        if (lyra_block_connector_type_has_var(block->connector.type)) {
+            block->connector.var = variable_mapping.data[block->connector.var];
+        }
     }
 
-    free(variable_mapping);
-    return 1;
+    free(variable_mapping.data);
+    free(shared_to_local_mapping.data);
 }
 
 void lyra_function_defrag_vars(struct lyra_function *fn) {

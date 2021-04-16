@@ -18,6 +18,7 @@
 #include "passes.h"
 #include "value.h"
 
+#if 0
 int main() {
     struct lyra_ctx ctx;
     lyra_ctx_init(&ctx);
@@ -81,3 +82,4 @@ int main() {
 
     lyra_ctx_del(&ctx);
 }
+#endif

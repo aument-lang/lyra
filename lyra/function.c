@@ -56,7 +56,7 @@ void lyra_function_reset_managed_vars(struct lyra_function *fn) {
 
 void lyra_function_comp(struct lyra_function *fn, struct lyra_comp *c) {
     lyra_comp_print_str(c, "au_value_t f");
-    lyra_comp_print_isize(c, fn->name);
+    lyra_comp_print_isize(c, fn->idx);
     lyra_comp_print_str(c, "(au_value_t *args) {\n");
     for (size_t i = 0; i < fn->shared.variables_len; i++) {
         const enum lyra_value_type type = fn->shared.variable_types[i];

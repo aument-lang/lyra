@@ -22,10 +22,10 @@
                                        struct lyra_ctx *ctx) {            \
         if (array->cap == 0) {                                            \
             array->data =                                                 \
-                (INNER *)ALLOCATOR##_malloc(ctx, sizeof(INNER) * IN_CAP); \
+                (INNER *)ALLOCATOR##malloc(ctx, sizeof(INNER) * IN_CAP); \
             array->cap = IN_CAP;                                          \
         } else if (array->len == array->cap) {                            \
-            array->data = (INNER *)ALLOCATOR##_realloc(                   \
+            array->data = (INNER *)ALLOCATOR##realloc(                   \
                 ctx, array->data, array->cap * 2 * sizeof(INNER));        \
             array->cap *= 2;                                              \
         }                                                                 \
@@ -45,7 +45,7 @@
     }
 
 #define LYRA_ARRAY_COPY(INNER, NAME, IN_CAP)                              \
-    LYRA_ARRAY_COPY_A(INNER, NAME, IN_CAP, lyra_ctx_mem)
+    LYRA_ARRAY_COPY_A(INNER, NAME, IN_CAP, lyra_ctx_mem_)
 
 #define LYRA_ARRAY_STRUCT_A(INNER, NAME, IN_CAP, ALLOCATOR)               \
     LYRA_ARRAY_COPY_A(INNER, NAME, IN_CAP, ALLOCATOR)                     \
@@ -63,4 +63,4 @@
     }
 
 #define LYRA_ARRAY_STRUCT(INNER, NAME, IN_CAP)                            \
-    LYRA_ARRAY_STRUCT_A(INNER, NAME, IN_CAP, lyra_ctx_mem)
+    LYRA_ARRAY_STRUCT_A(INNER, NAME, IN_CAP, lyra_ctx_mem_)

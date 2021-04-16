@@ -17,9 +17,7 @@ int lyra_pass_check_multiple_set(struct lyra_block *block,
                                  struct lyra_function_shared *shared,
                                  struct lyra_ctx *ctx);
 
-int lyra_pass_into_semi_ssa(struct lyra_block *block,
-                            struct lyra_function_shared *shared,
-                            struct lyra_ctx *ctx);
+void lyra_function_into_semi_ssa(struct lyra_function *fn);
 
 int lyra_pass_const_prop(struct lyra_block *block,
                          struct lyra_function_shared *shared,
