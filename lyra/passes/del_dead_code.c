@@ -58,6 +58,7 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
                 has_dest_reg &&
                 !LYRA_BA_GET_BIT(used_vars, insn->dest_var)) {
                 changed = 1;
+                assert(!LYRA_BA_GET_BIT(dead_vars, insn->dest_var));
                 LYRA_BA_SET_BIT(dead_vars, insn->dest_var);
                 struct lyra_insn *insn_next = insn->next;
                 lyra_block_remove_insn(block, insn);

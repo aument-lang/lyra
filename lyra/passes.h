@@ -32,8 +32,8 @@ int lyra_pass_purge_dead_code(struct lyra_block *block,
 int lyra_function_type_inference(struct lyra_function *fn);
 
 int lyra_pass_remove_indirection(struct lyra_block *block,
-                               struct lyra_function_shared *shared,
-                               struct lyra_ctx *ctx);
+                                 struct lyra_function_shared *shared,
+                                 struct lyra_ctx *ctx);
 
 int lyra_pass_correct_var_movs(struct lyra_block *block,
                                struct lyra_function_shared *shared,
@@ -45,3 +45,4 @@ int lyra_pass_add_casts(struct lyra_block *block,
 
 void lyra_function_defrag_vars(struct lyra_function *fn);
 
+void lyra_function_combine_blocks(struct lyra_function *fn);

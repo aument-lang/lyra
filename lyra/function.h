@@ -35,12 +35,12 @@ static inline int lyra_function_shared_is_var_multiple_use(
 struct lyra_function {
     struct lyra_block_array blocks;
     struct lyra_function_shared shared;
-    size_t name;
+    size_t idx;
     size_t num_args;
     struct lyra_ctx *ctx;
 };
 
-struct lyra_function *lyra_function_new(size_t name, size_t num_args,
+struct lyra_function *lyra_function_new(size_t idx, size_t num_args,
                                         struct lyra_ctx *ctx);
 
 size_t lyra_function_add_block(struct lyra_function *fn,
@@ -60,5 +60,3 @@ typedef int (*lyra_block_mutator_fn_t)(struct lyra_block *,
 
 int lyra_function_all_blocks(struct lyra_function *fn,
                              lyra_block_mutator_fn_t mutator);
-
-void lyra_function_defrag_vars(struct lyra_function *fn);

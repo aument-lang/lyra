@@ -598,4 +598,3 @@ int lyra_pass_remove_indirection(struct lyra_block *block,
     free(direct_registers);
     return 1;
 }
-

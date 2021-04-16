@@ -14,6 +14,106 @@
 #include "function.h"
 #include "platform.h"
 
+static inline int block_falls_through(const struct lyra_block *block, const size_t i) {
+    return block->connector.type == LYRA_BLOCK_FALLTHROUGH ||
+           (block->connector.type == LYRA_BLOCK_JMP &&
+            block->connector.label == i + 1);
+}
+
+static inline int block_is_empty(const struct lyra_block *block) {
+    return block->insn_first == 0 && block->insn_last == 0;
+}
+
+static void calculate_block_refcounts(struct lyra_function *fn, size_t *block_refcount) {
+    for (size_t i = 0; i < fn->blocks.len; i++) {
+        struct lyra_block *block = &fn->blocks.data[i];
+        switch (block->connector.type) {
+        case LYRA_BLOCK_FALLTHROUGH: {
+            if ((i + 1) < fn->blocks.len) {
+                block_refcount[i + 1]++;
+            }
+            break;
+        }
+        case LYRA_BLOCK_JMP: {
+            block_refcount[block->connector.label]++;
+            break;
+        }
+        case LYRA_BLOCK_JIF:
+        case LYRA_BLOCK_JNIF: {
+            block_refcount[block->connector.label]++;
+            if ((i + 1) < fn->blocks.len) {
+                block_refcount[i + 1]++;
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+
+void lyra_function_combine_blocks(struct lyra_function *fn) {
+    if (fn->blocks.len <= 1)
+        return;
+    size_t *block_mapping = malloc(sizeof(size_t) * fn->blocks.len);
+    for (size_t i = 0; i < fn->blocks.len; i++)
+        block_mapping[i] = i;
+
+    size_t *block_refcount = calloc(fn->blocks.len, sizeof(size_t));
+    calculate_block_refcounts(fn, block_refcount);
+
+    // Fuse all fallthrough blocks into one
+    for (size_t i = 0; i < fn->blocks.len - 1; i++) {
+        struct lyra_block *block = &fn->blocks.data[i];
+        if (block_falls_through(block, i) &&
+            ((block_refcount[i] <= 1) || block_is_empty(block))) {
+            struct lyra_block *next_block = &fn->blocks.data[i + 1];
+
+            if (block->insn_last != 0)
+                block->insn_last->next = next_block->insn_first;
+            if (next_block->insn_first != 0)
+                next_block->insn_first->prev = block->insn_last;
+            next_block->insn_first = block->insn_first;
+            if (next_block->insn_last == 0)
+                next_block->insn_last = block->insn_last;
+
+            block->insn_first = 0;
+            block->insn_last = 0;
+            block->connector.type = LYRA_BLOCK_FALLTHROUGH;
+            block_mapping[i] = i + 1;
+        }
+    }
+    for (size_t i = 0; i < fn->blocks.len; i++) {
+        struct lyra_block *block = &fn->blocks.data[i];
+        if (lyra_block_connector_type_is_jmp(block->connector.type)) {
+            block->connector.label = block_mapping[block->connector.label];
+        }
+    }
+
+    // Reset refcounts
+    memset(block_refcount, 0, fn->blocks.len * sizeof(size_t));
+    calculate_block_refcounts(fn, block_refcount);
+
+    // Remove all unreachable blocks (including empty ones)
+    size_t block_placement = 0;
+    for (size_t i = 0; i < fn->blocks.len; i++) {
+        struct lyra_block *block = &fn->blocks.data[i];
+        block_mapping[i] = block_placement;
+        if (block_refcount[i] > 0) {
+            fn->blocks.data[block_placement] = *block;
+            block_placement++;
+        }
+    }
+
+    fn->blocks.data =
+        lyra_ctx_gc_realloc(fn->ctx, fn->blocks.data,
+                            block_placement * sizeof(struct lyra_block));
+    fn->blocks.len = block_placement;
+
+    free(block_refcount);
+    free(block_mapping);
+}
+
 int lyra_pass_check_multiple_use(struct lyra_block *block,
                                  struct lyra_function_shared *shared,
                                  LYRA_UNUSED struct lyra_ctx *ctx) {
@@ -141,7 +241,8 @@ void lyra_function_defrag_vars(struct lyra_function *fn) {
         }
         assert(placement < i);
         variable_mapping[i] = placement;
-        fn->shared.variable_types[placement] = fn->shared.variable_types[i];
+        fn->shared.variable_types[placement] =
+            fn->shared.variable_types[i];
         placement++;
     }
     fn->shared.variables_len = placement;
@@ -156,7 +257,8 @@ void lyra_function_defrag_vars(struct lyra_function *fn) {
                 insn->left_var = variable_mapping[insn->left_var];
 
             if (lyra_insn_type_has_right_var(insn->type))
-                insn->right_operand.var = variable_mapping[insn->right_operand.var];
+                insn->right_operand.var =
+                    variable_mapping[insn->right_operand.var];
             else if (insn->type == LYRA_OP_CALL) {
                 struct lyra_insn_call_args *args =
                     insn->right_operand.call_args;
@@ -165,7 +267,7 @@ void lyra_function_defrag_vars(struct lyra_function *fn) {
                 if (lyra_insn_call_args_has_return(args))
                     has_dest_reg = 1;
             }
-            
+
             if (has_dest_reg) {
                 insn->dest_var = variable_mapping[insn->dest_var];
             }
@@ -178,4 +280,3 @@ void lyra_function_defrag_vars(struct lyra_function *fn) {
 
     free(variable_mapping);
 }
-
